@@ -1,22 +1,14 @@
-import React from "react";
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import Achievements from "./components/Achievements";
-import Competitions from "./components/Competitions";
-import Footer from "./components/Footer";
-import AdminPanel from "./components/AdminPanel";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Athletes from "./components/Athletes";
+import ProfileForm from "./pages/ProfileForm";
 
-export default function App() {
+function App() {
   return (
-    <>
-      <Navbar />
-      <Hero />
-      <Achievements />
-      <Competitions />
-      <Athletes/>
-      <AdminPanel />
-      <Footer />
-    </>
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} /> {/* your main homepage */}
+        <Route path="/submit-profile" element={<ProfileForm />} />
+      </Routes>
+    </Router>
   );
 }
