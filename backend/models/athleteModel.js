@@ -1,13 +1,17 @@
-// backend/models/athleteModel.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const athleteSchema = new mongoose.Schema({
-name: { type: String, required: true },
-gender: { type: String, enum: ['Male', 'Female'], required: true },
-photo: { type: String }, // store image path or URL
-events: [String],
-achievements: [String],
-year: String
+  name: { type: String, required: true },
+  photo: { type: String },
+  department: { type: String },
+  events: [String],
+  achievements: [String],
+  category: { 
+    type: String, 
+    enum: ["student", "alumni", "coach"], 
+    required: true 
+  },
+  year: String, // optional
 });
 
-module.exports = mongoose.model('Athlete', athleteSchema);
+module.exports = mongoose.model("Athlete", athleteSchema);
