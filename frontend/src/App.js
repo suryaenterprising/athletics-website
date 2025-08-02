@@ -1,13 +1,13 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Athletes from "./components/Athletes";
 import ProfileForm from "./pages/ProfileForm";
-import HomePage from "./pages/HomePage"; 
+import Home from "./pages/HomePage"; 
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<Home />} />
         <Route path="/submit-profile" element={<ProfileForm />} />
       </Routes>
     </Router>
