@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Athletes from "./components/Athletes";
 import ProfileForm from "./pages/ProfileForm";
-import HomePage from "./pages/HomePage"; // ✅ Add this
+import HomePage from "./pages/HomePage"; 
 
 function App() {
   return (
