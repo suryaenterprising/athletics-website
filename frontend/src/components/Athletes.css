@@ -1,0 +1,43 @@
+/* src/components/Athletes.css */
+.athletes-section {
+  padding: 2rem;
+  text-align: center;
+}
+
+.athletes-section .tabs {
+  margin-bottom: 1rem;
+}
+
+.athletes-section .tabs button {
+  margin: 0 8px;
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #ccc;
+  cursor: pointer;
+}
+
+.athletes-section .tabs button.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.profiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.profile-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 1rem;
+  width: 250px;
+  text-align: left;
+  background: white;
+}
+
+.profile-card img {
+  max-width: 100%;
+  border-radius: 4px;
+}
