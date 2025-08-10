@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary: #0ea5e9;
+  --secondary: #ef4444;
+  --accent: #f97316;
+  --dark: #1e293b;
+  --light: #f8fafc;
+}
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f1f5f9;
+  color: var(--dark);
+  overflow-x: hidden;
+}
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+.glass-dark {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.marquee {
+  animation: scroll 30s linear infinite;
+}
+@keyframes scroll {
+  0% { transform: translateX(0);}
+  100% { transform: translateX(-50%);}
+}
+.flip-card { perspective: 1000px; }
+.flip-card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+.flip-card:hover .flip-card-inner { transform: rotateY(180deg);}
+.flip-card-front,.flip-card-back { backface-visibility: hidden;}
+.flip-card-back { transform: rotateY(180deg);}
+.box-3d {
+  transform-style: preserve-3d;
+  transition: all 0.3s ease;
+}
+.box-3d:hover {
+  transform: translateY(-10px) rotateX(5deg);
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04);
+}
+.parallax { 
+  background-attachment: fixed; 
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+@media (max-width: 768px) {
+  .parallax { background-attachment: scroll; }
+}
+.nav-shrink {
+  padding: 0.5rem 2rem;
+  backdrop-filter: blur(15px);
+}
+.nav-link { position: relative; }
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: var(--primary);
+  transition: width 0.3s ease;
+}
+.nav-link:hover::after { width: 100%; }
+.nav-link.active::after { width: 100%; }
+.dropdown:hover .dropdown-menu, .dropdown-menu:focus-within { display: block; }
+.swiper-slide {
+  display: flex; align-items: center; justify-content: center;
+  background-size: cover; background-position: center;
+  height: 100vh;
+}
+.glow { text-shadow: 0 0 10px rgba(59,130,246,0.7); }
+.glow-icon:hover { filter: drop-shadow(0 0 8px rgba(59,130,246,0.7)); }
+.modal { transition: all 0.3s ease; opacity: 0; visibility: hidden;}
+.modal.active { opacity: 1; visibility: visible; }

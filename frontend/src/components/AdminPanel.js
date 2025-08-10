@@ -1,12 +1,425 @@
-// frontend/src/components/AdminPanel.js
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-export default function AdminPanel() {
+const API_BASE = "http://localhost:5000/api"; // Change for production
+
+export default function AdminPanel({ token, role }) {
+  const [open, setOpen] = useState(false);
+  const [section, setSection] = useState(null);
+  const [data, setData] = useState([]);
+  const [editItem, setEditItem] = useState(null); // currently edited object
+
+  const authHeader = { Authorization: `Bearer ${token}` };
+
+  useEffect(() => {
+    if (section) {
+      fetchSection(section);
+    }
+  }, [section]);
+
+  const fetchSection = async (sec) => {
+    try {
+      const res = await axios.get(`${API_BASE}/${sec}`, { headers: authHeader });
+      setData(res.data);
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to load ${sec}`);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this entry?")) return;
+    try {
+      await axios.delete(`${API_BASE}/${section}/${id}`, { headers: authHeader });
+      fetchSection(section);
+    } catch (err) {
+      console.error(err);
+      alert("Delete failed");
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      if (editItem._id) {
+        await axios.put(`${API_BASE}/${section}/${editItem._id}`, editItem, {
+          headers: authHeader,
+        });
+      } else {
+        await axios.post(`${API_BASE}/${section}`, editItem, { headers: authHeader });
+      }
+      setEditItem(null);
+      fetchSection(section);
+    } catch (err) {
+      console.error(err);
+      alert("Save failed");
+    }
+  };
+
+  // --- NESTED EDIT HELPERS (Competitions) ---
+  const addYear = () => {
+    setEditItem({
+      ...editItem,
+      years: [...(editItem.years || []), { year: new Date().getFullYear(), eventTypes: [] }],
+    });
+  };
+  const removeYear = (yearIdx) => {
+    const years = [...editItem.years];
+    years.splice(yearIdx, 1);
+    setEditItem({ ...editItem, years });
+  };
+  const addEventType = (yearIdx) => {
+    const years = [...editItem.years];
+    years[yearIdx].eventTypes.push({ typeName: "track", events: [] });
+    setEditItem({ ...editItem, years });
+  };
+  const removeEventType = (yearIdx, typeIdx) => {
+    const years = [...editItem.years];
+    years[yearIdx].eventTypes.splice(typeIdx, 1);
+    setEditItem({ ...editItem, years });
+  };
+  const addEvent = (yearIdx, typeIdx) => {
+    const years = [...editItem.years];
+    years[yearIdx].eventTypes[typeIdx].events.push({ name: "New Event", results: [] });
+    setEditItem({ ...editItem, years });
+  };
+  const removeEvent = (yearIdx, typeIdx, evIdx) => {
+    const years = [...editItem.years];
+    years[yearIdx].eventTypes[typeIdx].events.splice(evIdx, 1);
+    setEditItem({ ...editItem, years });
+  };
+  const addResult = (yearIdx, typeIdx, evIdx) => {
+    const years = [...editItem.years];
+    years[yearIdx].eventTypes[typeIdx].events[evIdx].results.push({
+      position: "Gold",
+      athlete: "",
+      result: "",
+      points: 0,
+    });
+    setEditItem({ ...editItem, years });
+  };
+  const removeResult = (yearIdx, typeIdx, evIdx, rIdx) => {
+    const years = [...editItem.years];
+    years[yearIdx].eventTypes[typeIdx].events[evIdx].results.splice(rIdx, 1);
+    setEditItem({ ...editItem, years });
+  };
+
+  if (role !== "admin") return null;
+
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>Admin Panel</h2>
-      <p>This section is for editing content like achievements, competitions, athletes, etc.</p>
-      {/* You can later add tabs or components to manage each section */}
-    </div>
+    <>
+      <div className="fixed bottom-4 right-4 z-50">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg"
+        >
+          <i className="fas fa-cog"></i>
+        </button>
+      </div>
+
+      {open && (
+        <div className="fixed top-0 right-0 w-full md:w-[80%] h-full bg-white shadow-2xl z-50 overflow-y-auto">
+          <div className="flex justify-between items-center p-4 bg-blue-600 text-white">
+            <h2 className="text-lg font-bold">Admin Panel</h2>
+            <button onClick={() => setOpen(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div className="flex gap-2 p-4 border-b">
+            {["competitions", "achievements", "records", "athletes"].map((sec) => (
+              <button
+                key={sec}
+                onClick={() => setSection(sec)}
+                className={`px-4 py-2 rounded ${
+                  section === sec ? "bg-blue-600 text-white" : "bg-gray-200"
+                }`}
+              >
+                {sec.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-4">
+            {section && !editItem && (
+              <>
+                <div className="flex justify-between mb-3">
+                  <h3 className="text-xl">{section.toUpperCase()}</h3>
+                  <button
+                    onClick={() => setEditItem({})}
+                    className="bg-green-500 px-3 py-1 rounded text-white"
+                  >
+                    Add
+                  </button>
+                </div>
+                {data.map((item) => (
+                  <div key={item._id} className="p-2 border mb-2 flex justify-between">
+                    <span>{item.title || item.name || item.category}</span>
+                    <div className="flex gap-2">
+                      <button
+                        className="bg-yellow-500 text-white px-2 rounded"
+                        onClick={() => setEditItem(item)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="bg-red-500 text-white px-2 rounded"
+                        onClick={() => handleDelete(item._id)}
+                      >
+                        Del
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* EDIT FORM */}
+            {editItem && (
+              <div className="border p-4">
+                <h4 className="font-bold mb-2">
+                  {editItem._id ? "Edit" : "Add"} {section}
+                </h4>
+
+                {/* Competitions */}
+                {section === "competitions" && (
+                  <>
+                    <input
+                      className="border p-1 w-full mb-1"
+                      placeholder="Key"
+                      value={editItem.key || ""}
+                      onChange={(e) => setEditItem({ ...editItem, key: e.target.value })}
+                    />
+                    <input
+                      className="border p-1 w-full mb-1"
+                      placeholder="Title"
+                      value={editItem.title || ""}
+                      onChange={(e) => setEditItem({ ...editItem, title: e.target.value })}
+                    />
+                    <textarea
+                      className="border p-1 w-full mb-1"
+                      placeholder="Description"
+                      value={editItem.description || ""}
+                      onChange={(e) =>
+                        setEditItem({ ...editItem, description: e.target.value })
+                      }
+                    />
+
+                    {/* Years */}
+                    <div>
+                      <button
+                        className="bg-green-500 text-white px-2"
+                        onClick={addYear}
+                      >
+                        Add Year
+                      </button>
+                      {editItem.years?.map((yr, yIdx) => (
+                        <div key={yIdx} className="mt-2 border p-2">
+                          <input
+                            type="number"
+                            value={yr.year}
+                            onChange={(e) => {
+                              const years = [...editItem.years];
+                              years[yIdx].year = e.target.value;
+                              setEditItem({ ...editItem, years });
+                            }}
+                          />
+                          <button
+                            className="bg-red-400 ml-2"
+                            onClick={() => removeYear(yIdx)}
+                          >
+                            Del Year
+                          </button>
+                          <button
+                            className="bg-blue-400 ml-2"
+                            onClick={() => addEventType(yIdx)}
+                          >
+                            Add Event Type
+                          </button>
+
+                          {yr.eventTypes?.map((et, tIdx) => (
+                            <div key={tIdx} className="ml-4 border p-2">
+                              <input
+                                value={et.typeName}
+                                onChange={(e) => {
+                                  const years = [...editItem.years];
+                                  years[yIdx].eventTypes[tIdx].typeName = e.target.value;
+                                  setEditItem({ ...editItem, years });
+                                }}
+                              />
+                              <button
+                                onClick={() => removeEventType(yIdx, tIdx)}
+                              >
+                                Del Type
+                              </button>
+                              <button
+                                onClick={() => addEvent(yIdx, tIdx)}
+                              >
+                                Add Event
+                              </button>
+
+                              {et.events?.map((ev, eIdx) => (
+                                <div key={eIdx} className="ml-4 border p-1">
+                                  <input
+                                    value={ev.name}
+                                    onChange={(e2) => {
+                                      const years = [...editItem.years];
+                                      years[yIdx].eventTypes[tIdx].events[eIdx].name =
+                                        e2.target.value;
+                                      setEditItem({ ...editItem, years });
+                                    }}
+                                  />
+                                  <button
+                                    onClick={() =>
+                                      removeEvent(yIdx, tIdx, eIdx)
+                                    }
+                                  >
+                                    Del Event
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      addResult(yIdx, tIdx, eIdx)
+                                    }
+                                  >
+                                    Add Result
+                                  </button>
+
+                                  {ev.results?.map((r, rIdx) => (
+                                    <div key={rIdx} className="ml-4 border p-1">
+                                      <input
+                                        value={r.position}
+                                        placeholder="Position"
+                                        onChange={(e) => {
+                                          const years = [...editItem.years];
+                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[
+                                            rIdx
+                                          ].position = e.target.value;
+                                          setEditItem({ ...editItem, years });
+                                        }}
+                                      />
+                                      <input
+                                        value={r.athlete}
+                                        placeholder="Athlete"
+                                        onChange={(e) => {
+                                          const years = [...editItem.years];
+                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[
+                                            rIdx
+                                          ].athlete = e.target.value;
+                                          setEditItem({ ...editItem, years });
+                                        }}
+                                      />
+                                      <input
+                                        value={r.result}
+                                        placeholder="Result"
+                                        onChange={(e) => {
+                                          const years = [...editItem.years];
+                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[
+                                            rIdx
+                                          ].result = e.target.value;
+                                          setEditItem({ ...editItem, years });
+                                        }}
+                                      />
+                                      <input
+                                        type="number"
+                                        value={r.points}
+                                        placeholder="Points"
+                                        onChange={(e) => {
+                                          const years = [...editItem.years];
+                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[
+                                            rIdx
+                                          ].points = e.target.value;
+                                          setEditItem({ ...editItem, years });
+                                        }}
+                                      />
+                                      <button
+                                        onClick={() =>
+                                          removeResult(yIdx, tIdx, eIdx, rIdx)
+                                        }
+                                      >
+                                        Del Result
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Achievements */}
+                {section === "achievements" && (
+                  <>
+                    <input
+                      className="border p-1 w-full mb-1"
+                      placeholder="Title"
+                      value={editItem.title || ""}
+                      onChange={(e) => setEditItem({ ...editItem, title: e.target.value })}
+                    />
+                    <textarea
+                      className="border p-1 w-full mb-1"
+                      placeholder="Description"
+                      value={editItem.description || ""}
+                      onChange={(e) =>
+                        setEditItem({ ...editItem, description: e.target.value })
+                      }
+                    />
+                  </>
+                )}
+
+                {/* Athletes */}
+                {section === "athletes" && (
+                  <>
+                    <input
+                      placeholder="Name"
+                      value={editItem.name || ""}
+                      onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
+                      className="border p-1 w-full mb-1"
+                    />
+                    <select
+                      value={editItem.category || "student"}
+                      onChange={(e) => setEditItem({ ...editItem, category: e.target.value })}
+                    >
+                      <option value="student">Student</option>
+                      <option value="coach">Coach</option>
+                      <option value="alumni">Alumni</option>
+                    </select>
+                  </>
+                )}
+
+                {/* Records */}
+                {section === "records" && (
+                  <>
+                    <input
+                      placeholder="Category (best or year)"
+                      value={editItem.category || ""}
+                      onChange={(e) => setEditItem({ ...editItem, category: e.target.value })}
+                      className="border p-1 w-full mb-1"
+                    />
+                  </>
+                )}
+
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={handleSave}
+                    className="bg-green-500 px-3 py-1 text-white"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditItem(null)}
+                    className="bg-gray-400 px-3 py-1"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

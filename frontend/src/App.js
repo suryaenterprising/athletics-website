@@ -1,36 +1,64 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useState } from "react";
+
+// Components
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
-import Achievements from "./components/Achievements";
 import Competitions from "./components/Competitions";
+import Achievements from "./components/Achievements";
 import Athletes from "./components/Athletes";
-import AdminPanel from "./pages/AdminPanel";
-import ProfileForm from "./pages/ProfileForm";
-import ScrollToTop from "./utils/ScrollToTop";
+import Records from "./components/Records";
+import Footer from "./components/Footer";
+import LoginModals from "./components/LoginModals";
+import AdminPanel from "./components/AdminPanel";
 
-function App() {
+export default function App() {
+  const [modal, setModal] = useState(null); // "user", "admin", or null
+  const [adminVisible, setAdminVisible] = useState(false);
+
+  const handleSignIn = (type) => {
+    // type: "user" | "admin"
+    setModal(type);
+  };
+
+  const closeModal = () => setModal(null);
+
+  const handleAdminLoginSuccess = () => {
+    // Could add authentication logic here
+    setAdminVisible(true);
+    setModal(null);
+  };
+
+  const handleLogout = () => {
+    setAdminVisible(false);
+  };
+
+  const handleEditSection = (section) => {
+  alert(`Edit ${section} clicked! Implement editing UI here.`);
+};
+
+
   return (
-    <Router>
-      <ScrollToTop />
-      <Navbar />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <Hero />
-              <Achievements />
-              <Competitions />
-              <Athletes />
-            </>
-          }
-        />
-        <Route path="/submit-profile" element={<ProfileForm />} />
-        <Route path="/admin" element={<AdminPanel />} />
-      </Routes>
-    </Router>
+    <div>
+      <Navbar onSignIn={handleSignIn} />
+      <Hero />
+      <Competitions />
+      <Achievements />
+      <Records />
+      <Athletes />
+      <Footer />
+
+      {/* Login Modals */}
+      <LoginModals
+        modal={modal}
+        closeModal={closeModal}
+      />
+
+      {/* Admin Floating Panel */}
+      <AdminPanel
+        visible={adminVisible}
+        onEdit={handleEditSection}
+        onLogout={handleLogout}
+      />
+    </div>
   );
 }
-
-export default App;
