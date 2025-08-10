@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.js';
 import competitionRoutes from './routes/competition.js';
 import achievementRoutes from './routes/achievement.js';
 import athleteRoutes from './routes/athletes.js';
+import recordsRoutes from './routes/records.js';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/competitions', competitionRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/athletes', athleteRoutes);
+app.use('/api/records', recordsRoutes);
 
 // Test route
 app.get('/', (req, res) => {
