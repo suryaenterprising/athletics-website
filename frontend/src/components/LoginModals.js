@@ -9,6 +9,10 @@ export default function LoginModal({ modal, closeModal }) {
   const isOpen = modal === "admin" || modal === "user";
   const isAdmin = modal === "admin";
 
+  // Use env variable for prod, fallback to localhost in dev
+  const API_BASE =
+    process.env.REACT_APP_API_URL || "http://localhost:5000";
+
   const handleLogin = async () => {
     if (!emailOrId || !password) {
       alert("Please fill in all fields");
@@ -17,7 +21,10 @@ export default function LoginModal({ modal, closeModal }) {
 
     setLoading(true);
     try {
-      const url = isAdmin ? "/api/auth/admin/login" : "/api/auth/login";
+      const url = isAdmin
+        ? `${API_BASE}/api/auth/admin/login`
+        : `${API_BASE}/api/auth/login`;
+
       const payload = isAdmin
         ? { adminId: emailOrId, password }
         : { email: emailOrId, password };
@@ -28,7 +35,13 @@ export default function LoginModal({ modal, closeModal }) {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        // Non-JSON response (avoid crash)
+        data = { message: "Unexpected server response" };
+      }
 
       if (res.ok) {
         localStorage.setItem("token", data.token);
@@ -36,7 +49,6 @@ export default function LoginModal({ modal, closeModal }) {
 
         alert(`${isAdmin ? "Admin" : "User"} login successful!`);
 
-        // Close modal and redirect
         closeModal();
         window.location.href = isAdmin
           ? "/admin/dashboard"
@@ -58,7 +70,6 @@ export default function LoginModal({ modal, closeModal }) {
       style={{ display: isOpen ? "flex" : "none" }}
     >
       <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-lg animate-fadeIn">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-2xl font-bold text-blue-800">
             {isAdmin ? "Admin Login" : "User Login"}
@@ -72,14 +83,12 @@ export default function LoginModal({ modal, closeModal }) {
           </button>
         </div>
 
-        {/* Form */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleLogin();
           }}
         >
-          {/* Email or Admin ID */}
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">
               {isAdmin ? "Admin ID" : "Email"}
@@ -93,7 +102,6 @@ export default function LoginModal({ modal, closeModal }) {
             />
           </div>
 
-          {/* Password */}
           <div className="mb-6">
             <label className="block text-gray-700 mb-2">Password</label>
             <input
@@ -105,7 +113,6 @@ export default function LoginModal({ modal, closeModal }) {
             />
           </div>
 
-          {/* Login Button */}
           <button
             type="submit"
             disabled={loading}
@@ -116,10 +123,12 @@ export default function LoginModal({ modal, closeModal }) {
             {loading ? "Logging in..." : "Login"}
           </button>
 
-          {/* Forgot password for users */}
           {!isAdmin && (
             <div className="mt-4 text-center">
-              <a href="/forgot-password" className="text-blue-600 hover:underline">
+              <a
+                href="/forgot-password"
+                className="text-blue-600 hover:underline"
+              >
                 Forgot password?
               </a>
             </div>
