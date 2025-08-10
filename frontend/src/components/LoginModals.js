@@ -4,11 +4,18 @@ import React, { useState } from "react";
 export default function LoginModal({ modal, closeModal }) {
   const [emailOrId, setEmailOrId] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const isOpen = modal === "admin" || modal === "user";
   const isAdmin = modal === "admin";
 
   const handleLogin = async () => {
+    if (!emailOrId || !password) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
     try {
       const url = isAdmin ? "/api/auth/admin/login" : "/api/auth/login";
       const payload = isAdmin
@@ -28,15 +35,20 @@ export default function LoginModal({ modal, closeModal }) {
         localStorage.setItem("role", data.role);
 
         alert(`${isAdmin ? "Admin" : "User"} login successful!`);
+
+        // Close modal and redirect
+        closeModal();
         window.location.href = isAdmin
           ? "/admin/dashboard"
           : "/user/dashboard";
       } else {
-        alert(data.message || "Login failed");
+        alert(data.message || "Invalid credentials");
       }
     } catch (err) {
-      console.error(err);
-      alert("Something went wrong");
+      console.error("Login error:", err);
+      alert("Network error, please try again later");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,7 +57,7 @@ export default function LoginModal({ modal, closeModal }) {
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       style={{ display: isOpen ? "flex" : "none" }}
     >
-      <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-lg">
+      <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-lg animate-fadeIn">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-2xl font-bold text-blue-800">
@@ -54,6 +66,7 @@ export default function LoginModal({ modal, closeModal }) {
           <button
             onClick={closeModal}
             className="text-gray-500 hover:text-gray-700"
+            type="button"
           >
             <i className="fas fa-times" />
           </button>
@@ -95,15 +108,18 @@ export default function LoginModal({ modal, closeModal }) {
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition"
+            disabled={loading}
+            className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition ${
+              loading ? "opacity-70 cursor-not-allowed" : ""
+            }`}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
 
           {/* Forgot password for users */}
           {!isAdmin && (
             <div className="mt-4 text-center">
-              <a href="#" className="text-blue-600 hover:underline">
+              <a href="/forgot-password" className="text-blue-600 hover:underline">
                 Forgot password?
               </a>
             </div>

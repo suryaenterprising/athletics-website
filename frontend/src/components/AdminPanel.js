@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const API_BASE = "http://localhost:5000/api"; // Change for production
+const API_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:5000"; // Change for production
 
 export default function AdminPanel({ token, role }) {
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState(null);
   const [data, setData] = useState([]);
-  const [editItem, setEditItem] = useState(null); // currently edited object
+  const [editItem, setEditItem] = useState(null);
 
   const authHeader = { Authorization: `Bearer ${token}` };
 
@@ -19,7 +20,7 @@ export default function AdminPanel({ token, role }) {
 
   const fetchSection = async (sec) => {
     try {
-      const res = await axios.get(`${API_BASE}/${sec}`, { headers: authHeader });
+      const res = await axios.get(`${API_URL}/${sec}`, { headers: authHeader });
       setData(res.data);
     } catch (err) {
       console.error(err);
@@ -30,7 +31,7 @@ export default function AdminPanel({ token, role }) {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this entry?")) return;
     try {
-      await axios.delete(`${API_BASE}/${section}/${id}`, { headers: authHeader });
+      await axios.delete(`${API_URL}/${section}/${id}`, { headers: authHeader });
       fetchSection(section);
     } catch (err) {
       console.error(err);
@@ -41,11 +42,11 @@ export default function AdminPanel({ token, role }) {
   const handleSave = async () => {
     try {
       if (editItem._id) {
-        await axios.put(`${API_BASE}/${section}/${editItem._id}`, editItem, {
+        await axios.put(`${API_URL}/${section}/${editItem._id}`, editItem, {
           headers: authHeader,
         });
       } else {
-        await axios.post(`${API_BASE}/${section}`, editItem, { headers: authHeader });
+        await axios.post(`${API_URL}/${section}`, editItem, { headers: authHeader });
       }
       setEditItem(null);
       fetchSection(section);
@@ -55,7 +56,7 @@ export default function AdminPanel({ token, role }) {
     }
   };
 
-  // --- NESTED EDIT HELPERS (Competitions) ---
+  // --- Nested Edit Helpers ---
   const addYear = () => {
     setEditItem({
       ...editItem,
@@ -63,32 +64,37 @@ export default function AdminPanel({ token, role }) {
     });
   };
   const removeYear = (yearIdx) => {
-    const years = [...editItem.years];
+    const years = [...(editItem.years || [])];
     years.splice(yearIdx, 1);
     setEditItem({ ...editItem, years });
   };
   const addEventType = (yearIdx) => {
-    const years = [...editItem.years];
+    const years = [...(editItem.years || [])];
+    years[yearIdx].eventTypes = years[yearIdx].eventTypes || [];
     years[yearIdx].eventTypes.push({ typeName: "track", events: [] });
     setEditItem({ ...editItem, years });
   };
   const removeEventType = (yearIdx, typeIdx) => {
-    const years = [...editItem.years];
+    const years = [...(editItem.years || [])];
     years[yearIdx].eventTypes.splice(typeIdx, 1);
     setEditItem({ ...editItem, years });
   };
   const addEvent = (yearIdx, typeIdx) => {
-    const years = [...editItem.years];
+    const years = [...(editItem.years || [])];
+    years[yearIdx].eventTypes[typeIdx].events =
+      years[yearIdx].eventTypes[typeIdx].events || [];
     years[yearIdx].eventTypes[typeIdx].events.push({ name: "New Event", results: [] });
     setEditItem({ ...editItem, years });
   };
   const removeEvent = (yearIdx, typeIdx, evIdx) => {
-    const years = [...editItem.years];
+    const years = [...(editItem.years || [])];
     years[yearIdx].eventTypes[typeIdx].events.splice(evIdx, 1);
     setEditItem({ ...editItem, years });
   };
   const addResult = (yearIdx, typeIdx, evIdx) => {
-    const years = [...editItem.years];
+    const years = [...(editItem.years || [])];
+    years[yearIdx].eventTypes[typeIdx].events[evIdx].results =
+      years[yearIdx].eventTypes[typeIdx].events[evIdx].results || [];
     years[yearIdx].eventTypes[typeIdx].events[evIdx].results.push({
       position: "Gold",
       athlete: "",
@@ -98,7 +104,7 @@ export default function AdminPanel({ token, role }) {
     setEditItem({ ...editItem, years });
   };
   const removeResult = (yearIdx, typeIdx, evIdx, rIdx) => {
-    const years = [...editItem.years];
+    const years = [...(editItem.years || [])];
     years[yearIdx].eventTypes[typeIdx].events[evIdx].results.splice(rIdx, 1);
     setEditItem({ ...editItem, years });
   };
@@ -107,6 +113,7 @@ export default function AdminPanel({ token, role }) {
 
   return (
     <>
+      {/* Floating Admin Button */}
       <div className="fixed bottom-4 right-4 z-50">
         <button
           onClick={() => setOpen((v) => !v)}
@@ -118,6 +125,7 @@ export default function AdminPanel({ token, role }) {
 
       {open && (
         <div className="fixed top-0 right-0 w-full md:w-[80%] h-full bg-white shadow-2xl z-50 overflow-y-auto">
+          {/* Header */}
           <div className="flex justify-between items-center p-4 bg-blue-600 text-white">
             <h2 className="text-lg font-bold">Admin Panel</h2>
             <button onClick={() => setOpen(false)}>
@@ -125,6 +133,7 @@ export default function AdminPanel({ token, role }) {
             </button>
           </div>
 
+          {/* Section Buttons */}
           <div className="flex gap-2 p-4 border-b">
             {["competitions", "achievements", "records", "athletes"].map((sec) => (
               <button
@@ -139,7 +148,9 @@ export default function AdminPanel({ token, role }) {
             ))}
           </div>
 
+          {/* Main Content */}
           <div className="p-4">
+            {/* List View */}
             {section && !editItem && (
               <>
                 <div className="flex justify-between mb-3">
@@ -152,7 +163,10 @@ export default function AdminPanel({ token, role }) {
                   </button>
                 </div>
                 {data.map((item) => (
-                  <div key={item._id} className="p-2 border mb-2 flex justify-between">
+                  <div
+                    key={item._id || item.key || item.name}
+                    className="p-2 border mb-2 flex justify-between"
+                  >
                     <span>{item.title || item.name || item.category}</span>
                     <div className="flex gap-2">
                       <button
@@ -173,7 +187,7 @@ export default function AdminPanel({ token, role }) {
               </>
             )}
 
-            {/* EDIT FORM */}
+            {/* Edit Form */}
             {editItem && (
               <div className="border p-4">
                 <h4 className="font-bold mb-2">
@@ -219,7 +233,7 @@ export default function AdminPanel({ token, role }) {
                             value={yr.year}
                             onChange={(e) => {
                               const years = [...editItem.years];
-                              years[yIdx].year = e.target.value;
+                              years[yIdx].year = Number(e.target.value);
                               setEditItem({ ...editItem, years });
                             }}
                           />
@@ -246,14 +260,10 @@ export default function AdminPanel({ token, role }) {
                                   setEditItem({ ...editItem, years });
                                 }}
                               />
-                              <button
-                                onClick={() => removeEventType(yIdx, tIdx)}
-                              >
+                              <button onClick={() => removeEventType(yIdx, tIdx)}>
                                 Del Type
                               </button>
-                              <button
-                                onClick={() => addEvent(yIdx, tIdx)}
-                              >
+                              <button onClick={() => addEvent(yIdx, tIdx)}>
                                 Add Event
                               </button>
 
@@ -268,18 +278,10 @@ export default function AdminPanel({ token, role }) {
                                       setEditItem({ ...editItem, years });
                                     }}
                                   />
-                                  <button
-                                    onClick={() =>
-                                      removeEvent(yIdx, tIdx, eIdx)
-                                    }
-                                  >
+                                  <button onClick={() => removeEvent(yIdx, tIdx, eIdx)}>
                                     Del Event
                                   </button>
-                                  <button
-                                    onClick={() =>
-                                      addResult(yIdx, tIdx, eIdx)
-                                    }
-                                  >
+                                  <button onClick={() => addResult(yIdx, tIdx, eIdx)}>
                                     Add Result
                                   </button>
 
@@ -326,7 +328,7 @@ export default function AdminPanel({ token, role }) {
                                           const years = [...editItem.years];
                                           years[yIdx].eventTypes[tIdx].events[eIdx].results[
                                             rIdx
-                                          ].points = e.target.value;
+                                          ].points = Number(e.target.value);
                                           setEditItem({ ...editItem, years });
                                         }}
                                       />
