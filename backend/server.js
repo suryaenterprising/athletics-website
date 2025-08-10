@@ -2,7 +2,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import { MONGO_URI } from './config.js'; // Don't import PORT from config, use process.env.PORT
+import { MONGO_URI } from './config.js'; // MONGO_URI from config
 import authRoutes from './routes/auth.js';
 import competitionRoutes from './routes/competition.js';
 import achievementRoutes from './routes/achievement.js';
@@ -13,12 +13,15 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// Allow only your Vercel frontend
+// ✅ Fixed CORS (removed trailing slash) + allow preflight
 app.use(cors({
-  origin: ["https://athletics-website.vercel.app/", "http://localhost:3000"],
+  origin: [
+    "https://athletics-website.vercel.app", // no trailing slash
+    "http://localhost:3000"
+  ],
   credentials: true
 }));
-
+app.options('*', cors()); // handle OPTIONS requests globally
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -33,13 +36,11 @@ app.get('/', (req, res) => {
 
 // Connect to MongoDB
 mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+  // These options are now optional, but won't hurt if you remove them
 })
 .then(() => {
   console.log('MongoDB connected successfully');
 
-  // Use Render's PORT
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
