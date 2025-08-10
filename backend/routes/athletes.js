@@ -1,14 +1,15 @@
-const express = require("express");
-const multer = require("multer");
-const path = require("path");
-const Athlete = require("../models/Athlete");
+// routes/athletes.js
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import Athlete from '../models/Athlete.js';
 
 const router = express.Router();
 
 // Multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/athletes");
+    cb(null, 'uploads/athletes');
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -17,7 +18,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Add athlete
-router.post("/add", upload.single("photo"), async (req, res) => {
+router.post('/add', upload.single('photo'), async (req, res) => {
   try {
     const { name, sport, achievements } = req.body;
     const newAthlete = new Athlete({
@@ -34,7 +35,7 @@ router.post("/add", upload.single("photo"), async (req, res) => {
 });
 
 // Edit athlete
-router.put("/edit/:id", upload.single("photo"), async (req, res) => {
+router.put('/edit/:id', upload.single('photo'), async (req, res) => {
   try {
     const { name, sport, achievements } = req.body;
     const updateData = { name, sport, achievements };
@@ -47,9 +48,9 @@ router.put("/edit/:id", upload.single("photo"), async (req, res) => {
 });
 
 // Get all athletes
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   const athletes = await Athlete.find();
   res.json(athletes);
 });
 
-module.exports = router;
+export default router;
