@@ -1,23 +1,50 @@
-const Athlete = require("../models/athleteModel");
+import Athlete from '../models/Athlete.js';
 
-// POST (for public form submissions)
-exports.createAthlete = async (req, res) => {
+// Get all athletes (optionally filter by category)
+export const getAthletes = async (req, res) => {
   try {
-    const newAthlete = new Athlete(req.body);
-    await newAthlete.save();
-    res.status(201).json(newAthlete);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+    const filter = {};
+    if (req.query.category) filter.category = req.query.category;
+    const athletes = await Athlete.find(filter);
+    res.json(athletes);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
-// GET all athletes by category (student, alumni, coach)
-exports.getAthletesByCategory = async (req, res) => {
+// Create a new athlete
+export const createAthlete = async (req, res) => {
   try {
-    const { category } = req.params;
-    const athletes = await Athlete.find({ category });
-    res.status(200).json(athletes);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const athlete = new Athlete(req.body);
+    await athlete.save();
+    res.status(201).json(athlete);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Update athlete
+export const updateAthlete = async (req, res) => {
+  try {
+    const updated = await Athlete.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updated) return res.status(404).json({ message: 'Athlete not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Delete athlete
+export const deleteAthlete = async (req, res) => {
+  try {
+    const deleted = await Athlete.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Athlete not found' });
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

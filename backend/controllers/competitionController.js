@@ -1,55 +1,59 @@
-const Competition = require("../models/Competition");
+import Competition from '../models/Competition.js';
 
-// GET all competitions
-exports.getAllCompetitions = async (req, res) => {
-try {
-const competitions = await Competition.find();
-res.status(200).json(competitions);
-} catch (err) {
-res.status(500).json({ message: err.message });
-}
+// Get all competitions
+export const getCompetitions = async (req, res) => {
+  try {
+    const competitions = await Competition.find({});
+    res.json(competitions);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// GET one competition
-exports.getCompetitionById = async (req, res) => {
-try {
-const competition = await Competition.findById(req.params.id);
-if (!competition) return res.status(404).json({ message: "Not found" });
-res.status(200).json(competition);
-} catch (err) {
-res.status(500).json({ message: err.message });
-}
+// Get a single competition by ID
+export const getCompetition = async (req, res) => {
+  try {
+    const competition = await Competition.findById(req.params.id);
+    if (!competition) return res.status(404).json({ message: "Competition not found" });
+    res.json(competition);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// POST create competition
-exports.createCompetition = async (req, res) => {
-try {
-const competition = new Competition(req.body);
-const saved = await competition.save();
-res.status(201).json(saved);
-} catch (err) {
-res.status(400).json({ message: err.message });
-}
+// Create new competition
+export const createCompetition = async (req, res) => {
+  try {
+    const newCompetition = new Competition(req.body);
+    await newCompetition.save();
+    res.status(201).json(newCompetition);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 };
 
-// PUT update competition
-exports.updateCompetition = async (req, res) => {
-try {
-const updated = await Competition.findByIdAndUpdate(req.params.id, req.body, { new: true });
-if (!updated) return res.status(404).json({ message: "Not found" });
-res.status(200).json(updated);
-} catch (err) {
-res.status(400).json({ message: err.message });
-}
+// Update competition partially (including nested objects)
+export const updateCompetition = async (req, res) => {
+  try {
+    const updatedCompetition = await Competition.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedCompetition) return res.status(404).json({ message: "Competition not found" });
+    res.json(updatedCompetition);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 };
 
-// DELETE competition
-exports.deleteCompetition = async (req, res) => {
-try {
-const deleted = await Competition.findByIdAndDelete(req.params.id);
-if (!deleted) return res.status(404).json({ message: "Not found" });
-res.status(200).json({ message: "Deleted successfully" });
-} catch (err) {
-res.status(500).json({ message: err.message });
-}
+// Delete a competition by ID
+export const deleteCompetition = async (req, res) => {
+  try {
+    const deleted = await Competition.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Competition not found" });
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };

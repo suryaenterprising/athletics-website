@@ -1,43 +1,77 @@
-/* src/components/Athletes.css */
 .athletes-section {
   padding: 2rem;
-  text-align: center;
+  background-color: #f9f9f9;
 }
 
-.athletes-section .tabs {
+.athletes-section h2 {
+  text-align: center;
   margin-bottom: 1rem;
 }
 
-.athletes-section .tabs button {
-  margin: 0 8px;
-  padding: 0.5rem 1rem;
-  border: none;
-  background-color: #ccc;
-  cursor: pointer;
+.category-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.athletes-section .tabs button.active {
+.category-card {
+  background: white;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.category-card:hover,
+.category-card.active {
   background-color: #007bff;
   color: white;
+  border-color: #007bff;
 }
 
 .profiles {
   display: flex;
   flex-wrap: wrap;
+  gap: 1.5rem;
   justify-content: center;
-  gap: 1rem;
 }
 
 .profile-card {
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  background: #fff;
+  border-radius: 10px;
   padding: 1rem;
-  width: 250px;
-  text-align: left;
-  background: white;
+  width: 280px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  text-align: center;
 }
 
 .profile-card img {
   max-width: 100%;
-  border-radius: 4px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.admin-actions {
+  margin-top: 0.8rem;
+}
+
+.edit-btn, .delete-btn {
+  margin: 0 0.3rem;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.edit-btn {
+  background: #ffc107;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
 }

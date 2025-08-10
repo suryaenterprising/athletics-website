@@ -1,70 +1,77 @@
+// src/components/Athletes.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "./Athletes.css"; // create custom styles
-
-const API_URL = "https://your-backend-url.com/api/athletes"; // replace with your backend URL
+import "./Athletes.css";
 
 export default function Athletes() {
-  const [activeTab, setActiveTab] = useState("student");
+  const [activeCategory, setActiveCategory] = useState("student");
   const [profiles, setProfiles] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false); // Replace with real auth logic
+
+  const categories = [
+    { label: "Students", value: "student" },
+    { label: "Alumni", value: "alumni" },
+    { label: "Coaches", value: "coach" }
+  ];
 
   useEffect(() => {
     fetchProfiles();
-  }, [activeTab]);
+  }, [activeCategory]);
 
   const fetchProfiles = async () => {
     try {
-      const res = await axios.get(`${API_URL}/${activeTab}`);
+      const res = await axios.get(
+        `https://your-backend-url.com/api/athletes/${activeCategory}`
+      );
       setProfiles(res.data);
     } catch (err) {
-      console.error("Failed to fetch profiles", err);
+      console.error("Error fetching profiles:", err);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure to delete this profile?")) {
-      try {
-        await axios.delete(`${API_URL}/${id}`);
-        fetchProfiles();
-      } catch (err) {
-        console.error("Error deleting profile", err);
-      }
+    if (!window.confirm("Are you sure you want to delete this profile?")) return;
+    try {
+      await axios.delete(`https://your-backend-url.com/api/athletes/${id}`);
+      fetchProfiles(); // Refresh list
+    } catch (err) {
+      alert("Failed to delete");
     }
   };
-
-  const renderCategoryCards = () => (
-    <div className="athlete-cards">
-      {["student", "alumni", "coach"].map((type) => (
-        <div
-          key={type}
-          className={`athlete-card ${activeTab === type ? "active" : ""}`}
-          onClick={() => setActiveTab(type)}
-        >
-          <h3>{type.charAt(0).toUpperCase() + type.slice(1)}</h3>
-        </div>
-      ))}
-    </div>
-  );
 
   return (
     <section id="athletes" className="athletes-section">
       <h2>Athletes</h2>
-      {renderCategoryCards()}
+
+      <div className="category-buttons">
+        {categories.map((cat) => (
+          <button
+            key={cat.value}
+            className={`category-card ${activeCategory === cat.value ? "active" : ""}`}
+            onClick={() => setActiveCategory(cat.value)}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
       <div className="profiles">
         {profiles.map((person) => (
           <div key={person._id} className="profile-card">
             <img src={person.photo} alt={person.name} />
             <h3>{person.name}</h3>
-            <p>{person.department}</p>
-            <p>{person.events?.join(", ")}</p>
-            <p>{person.achievements}</p>
-            <button onClick={() => handleDelete(person._id)}>Delete</button>
+            <p><strong>Department:</strong> {person.department}</p>
+            <p><strong>Events:</strong> {person.events?.join(", ")}</p>
+            <p><strong>Achievements:</strong> {person.achievements?.join(", ")}</p>
+            {isAdmin && (
+              <div className="admin-actions">
+                <button className="edit-btn">Edit</button>
+                <button className="delete-btn" onClick={() => handleDelete(person._id)}>Delete</button>
+              </div>
+            )}
           </div>
         ))}
       </div>
-      <a href={`/submit-profile?category=${activeTab}`} className="submit-link">
-        + Add New {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-      </a>
     </section>
   );
 }
