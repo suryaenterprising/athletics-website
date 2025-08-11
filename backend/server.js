@@ -22,7 +22,7 @@ app.use(cors({
   ],
   credentials: true
 }));
-app.options('*', cors()); // handle OPTIONS requests globally
+app.options('/*', cors()); // handle OPTIONS requests globally
 
 // Routes
 app.use('/api/auth', authRoutes);
