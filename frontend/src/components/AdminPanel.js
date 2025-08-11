@@ -21,10 +21,7 @@ export default function AdminPanel({ visible, token, role }) {
   // Early returns moved below hooks
   if (!visible || role !== "admin") return null;
 
-  // ...rest of your component...
-
-
-  // ... rest of your code ...
+ 
 
 
   const fetchSection = async (sec) => {
@@ -118,7 +115,7 @@ export default function AdminPanel({ visible, token, role }) {
     setEditItem({ ...editItem, years });
   };
 
-  if (role !== "admin") return null;
+ 
 
   return (
     <>

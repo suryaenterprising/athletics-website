@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -14,6 +14,21 @@ import AdminPanel from "./components/AdminPanel";
 export default function App() {
   const [modal, setModal] = useState(null); // "user", "admin", or null
   const [adminVisible, setAdminVisible] = useState(false);
+  const [token, setToken] = useState(null);
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    // Load token and role from localStorage on app start
+    const storedToken = localStorage.getItem("token");
+    const storedRole = localStorage.getItem("role");
+    if (storedToken && storedRole) {
+      setToken(storedToken);
+      setRole(storedRole);
+      if (storedRole === "admin") {
+        setAdminVisible(true);
+      }
+    }
+  }, []);
 
   const handleSignIn = (type) => {
     setModal(type);
@@ -21,14 +36,25 @@ export default function App() {
 
   const closeModal = () => setModal(null);
 
-  // This will be called after admin login success
+  // Called after admin login success inside LoginModals
   const handleAdminLoginSuccess = () => {
-    setAdminVisible(true);
+    const storedToken = localStorage.getItem("token");
+    const storedRole = localStorage.getItem("role");
+    setToken(storedToken);
+    setRole(storedRole);
+    if (storedRole === "admin") {
+      setAdminVisible(true);
+    }
     setModal(null);
   };
 
   const handleLogout = () => {
     setAdminVisible(false);
+    setToken(null);
+    setRole(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    alert("Logged out successfully");
   };
 
   const handleEditSection = (section) => {
@@ -37,7 +63,8 @@ export default function App() {
 
   return (
     <div>
-      <Navbar onSignIn={handleSignIn} />
+      <Navbar onSignIn={handleSignIn} onLogout={handleLogout} role={role} />
+
       <Hero />
       <Competitions />
       <Achievements />
@@ -45,16 +72,16 @@ export default function App() {
       <Athletes />
       <Footer />
 
-      {/* Login Modals */}
       <LoginModals
         modal={modal}
         closeModal={closeModal}
-        onAdminLoginSuccess={handleAdminLoginSuccess}  // <-- pass the callback
+        onAdminLoginSuccess={handleAdminLoginSuccess}
       />
 
-      {/* Admin Floating Panel */}
       <AdminPanel
         visible={adminVisible}
+        token={token}
+        role={role}
         onEdit={handleEditSection}
         onLogout={handleLogout}
       />
