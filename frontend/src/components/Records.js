@@ -1,107 +1,244 @@
 import React, { useState } from "react";
 
-const TABS = [
-  { key: "best", label: "Best Ever" },
-  { key: "2023", label: "2023" },
-  { key: "2024", label: "2024" },
-  { key: "2025", label: "2025" }
-];
-
-const BEST_RECORDS = {
-  track: [
-    { event: "100m Dash", record: "10.8s", athlete: "Rohan Sharma", year: "2023" },
-    { event: "200m Dash", record: "22.1s", athlete: "Vikram Joshi", year: "2021" },
-    { event: "400m Dash", record: "49.5s", athlete: "Neha Gupta", year: "2017" },
-    { event: "800m Run", record: "1:58.3", athlete: "Anjali Mishra", year: "2019" },
-    { event: "1500m Run", record: "4:05.7", athlete: "Amit Patel", year: "2022" }
-  ],
-  field: [
-    { event: "Long Jump", record: "7.2m", athlete: "Amit Patel", year: "2022" },
-    { event: "High Jump", record: "2.05m", athlete: "Rahul Verma", year: "2015" },
-    { event: "Triple Jump", record: "14.8m", athlete: "Rahul Verma", year: "2016" },
-    { event: "Javelin Throw", record: "58.3m", athlete: "Priya Singh", year: "2023" },
-    { event: "Shot Put", record: "14.5m", athlete: "Priya Singh", year: "2023" }
-  ]
+// Example starting records structure
+const initialRecords = {
+  best: {
+    track: [
+      { event: "100m", record: "10.2s", athlete: "John Doe", year: "2019" },
+    ],
+    field: [
+      { event: "Long Jump", record: "7.2m", athlete: "Jane Doe", year: "2018" },
+    ],
+  },
+  2023: { track: [], field: [] },
+  2024: { track: [], field: [] },
 };
 
-export default function Records() {
+export default function Records({ adminView = true }) {
+  const [records, setRecords] = useState(initialRecords);
   const [activeTab, setActiveTab] = useState("best");
 
-  const renderTable = (records) => (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white rounded-lg overflow-hidden">
-        <thead className="bg-blue-600 text-white">
-          <tr>
-            <th className="py-3 px-4 text-left">Event</th>
-            <th className="py-3 px-4 text-left">Record</th>
-            <th className="py-3 px-4 text-left">Athlete</th>
-            <th className="py-3 px-4 text-left">Year</th>
-          </tr>
-        </thead>
-        <tbody>
-          {records.map((rec, i) => (
-            <tr key={i} className="border-b border-gray-200 hover:bg-blue-50">
-              <td className="py-3 px-4">{rec.event}</td>
-              <td className="py-3 px-4">{rec.record}</td>
-              <td className="py-3 px-4">{rec.athlete}</td>
-              <td className="py-3 px-4">{rec.year}</td>
+  const [editing, setEditing] = useState({ track: null, field: null });
+  const [editRecord, setEditRecord] = useState({
+    event: "",
+    record: "",
+    athlete: "",
+    year: "",
+  });
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setEditRecord((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleEdit(category, index) {
+    setEditing((prev) => ({ ...prev, [category]: index }));
+
+    const tabRecords = records[activeTab];
+    if (tabRecords && tabRecords[category] && tabRecords[category][index]) {
+      setEditRecord({ ...tabRecords[category][index] });
+    } else {
+      setEditRecord({ event: "", record: "", athlete: "", year: "" });
+    }
+  }
+
+  function handleSave(category) {
+    if (!editRecord.event.trim()) {
+      alert("Event name cannot be empty");
+      return;
+    }
+    setRecords((prev) => {
+      const tabRecords = prev[activeTab] || { track: [], field: [] };
+      const updatedCategory = [...(tabRecords[category] || [])];
+      updatedCategory[editing[category]] = { ...editRecord };
+
+      return {
+        ...prev,
+        [activeTab]: {
+          ...tabRecords,
+          [category]: updatedCategory,
+        },
+      };
+    });
+    setEditing((prev) => ({ ...prev, [category]: null }));
+  }
+
+  function handleCancel(category) {
+    setEditing((prev) => ({ ...prev, [category]: null }));
+    setEditRecord({ event: "", record: "", athlete: "", year: "" });
+  }
+
+  function handleDelete(category, index) {
+    if (window.confirm("Are you sure you want to delete this record?")) {
+      setRecords((prev) => {
+        const tabRecords = prev[activeTab] || { track: [], field: [] };
+        const updatedCategory = (tabRecords[category] || []).filter(
+          (_, i) => i !== index
+        );
+        return {
+          ...prev,
+          [activeTab]: {
+            ...tabRecords,
+            [category]: updatedCategory,
+          },
+        };
+      });
+    }
+  }
+
+  function handleAdd(category) {
+    setRecords((prev) => {
+      const tabRecords = prev[activeTab] || { track: [], field: [] };
+      const updatedCategory = [
+        ...(tabRecords[category] || []),
+        { event: "", record: "", athlete: "", year: "" },
+      ];
+      return {
+        ...prev,
+        [activeTab]: {
+          ...tabRecords,
+          [category]: updatedCategory,
+        },
+      };
+    });
+
+    setEditing((prev) => ({
+      ...prev,
+      [category]: (records[activeTab]?.[category]?.length || 0),
+    }));
+
+    setEditRecord({ event: "", record: "", athlete: "", year: "" });
+  }
+
+  const renderTable = (tabKey, category) => {
+    const tabRecords = records[tabKey] || { track: [], field: [] };
+    const recordsList = tabRecords[category] || [];
+
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white rounded-lg overflow-hidden">
+          <thead className="bg-blue-600 text-white">
+            <tr>
+              <th className="py-3 px-4 text-left">Event</th>
+              <th className="py-3 px-4 text-left">Record</th>
+              <th className="py-3 px-4 text-left">Athlete</th>
+              <th className="py-3 px-4 text-left">Year</th>
+              {adminView && <th className="py-3 px-4">Actions</th>}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-
-  return (
-    <section id="records" className="py-20 px-4 md:px-8 bg-gradient-to-b from-white to-blue-50">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-blue-900">
-          Records
-        </h2>
-
-        {/* Tabs */}
-        <div className="flex justify-center mb-12">
-          <div className="flex flex-wrap justify-center gap-2">
-           {TABS.map(tab => (
-  <button
-    key={tab.key}
-    className={`${activeTab === tab.key ? "bg-blue-600 text-white" : "bg-white text-blue-600"} px-6 py-2 rounded-lg transition`}
-    onClick={() => setActiveTab(tab.key)}
-  >
-    {tab.label}
-  </button>
-))}
-
-    
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === "best" && (
-          <div className="glass p-6 rounded-xl">
-            <h3 className="text-2xl font-bold mb-6 text-center">
-              Best Ever Records at IIT Indore
-            </h3>
-            <div className="mb-8">
-              <h4 className="text-xl font-semibold mb-4 text-blue-800">Track Events</h4>
-              {renderTable(BEST_RECORDS.track)}
-            </div>
-            <div>
-              <h4 className="text-xl font-semibold mb-4 text-blue-800">Field Events</h4>
-              {renderTable(BEST_RECORDS.field)}
-            </div>
-          </div>
-        )}
-
-        {activeTab !== "best" && (
-          <div className="glass p-6 rounded-xl">
-            <h3 className="text-2xl font-bold mb-6 text-center">
-              Records Set in {activeTab}
-            </h3>
-            <p className="text-center">{activeTab} records will be displayed here</p>
+          </thead>
+          <tbody>
+            {recordsList.map((rec, i) => (
+              <tr key={i} className="border-b border-gray-200 hover:bg-blue-50">
+                {editing[category] === i && activeTab === tabKey ? (
+                  <>
+                    {["event", "record", "athlete", "year"].map((field) => (
+                      <td className="py-3 px-4" key={field}>
+                        <input
+                          type="text"
+                          name={field}
+                          value={editRecord[field]}
+                          onChange={handleChange}
+                          className="w-full border border-gray-300 rounded px-2 py-1"
+                        />
+                      </td>
+                    ))}
+                    <td className="py-3 px-4 space-x-2">
+                      <button
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                        onClick={() => handleSave(category)}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded"
+                        onClick={() => handleCancel(category)}
+                      >
+                        Cancel
+                      </button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="py-3 px-4">{rec.event}</td>
+                    <td className="py-3 px-4">{rec.record}</td>
+                    <td className="py-3 px-4">{rec.athlete}</td>
+                    <td className="py-3 px-4">{rec.year}</td>
+                    {adminView && (
+                      <td className="py-3 px-4 space-x-2">
+                        <button
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                          onClick={() => handleEdit(category, i)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                          onClick={() => handleDelete(category, i)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {adminView && (
+          <div className="mt-4">
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              onClick={() => handleAdd(category)}
+            >
+              + Add Record
+            </button>
           </div>
         )}
       </div>
-    </section>
+    );
+  };
+
+  return (
+    <div className="p-6">
+      {/* Tab Navigation */}
+      <div className="flex space-x-4 mb-6">
+        {Object.keys(records).map((tab) => (
+          <button
+            key={tab}
+            className={`px-4 py-2 rounded ${
+              activeTab === tab
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab === "best" ? "Best Ever" : tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="glass p-6 rounded-xl">
+        <h3 className="text-2xl font-bold mb-6 text-center">
+          {activeTab === "best"
+            ? "Best Ever Records at IIT Indore"
+            : `Records Set in ${activeTab}`}
+        </h3>
+
+        <div className="mb-8">
+          <h4 className="text-xl font-semibold mb-4 text-blue-800">
+            Track Events
+          </h4>
+          {renderTable(activeTab, "track")}
+        </div>
+        <div>
+          <h4 className="text-xl font-semibold mb-4 text-blue-800">
+            Field Events
+          </h4>
+          {renderTable(activeTab, "field")}
+        </div>
+      </div>
+    </div>
   );
 }

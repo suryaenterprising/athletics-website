@@ -20,21 +20,21 @@ router.get('/', getAchievements);
 /**
  * @route   POST /api/achievements
  * @desc    Create a new achievement
- * @access  Admin only
+ * @access  Admin
  */
 router.post('/', verifyToken, requireAdmin, createAchievement);
 
 /**
  * @route   PUT /api/achievements/:id
- * @desc    Update an existing achievement
- * @access  Admin only
+ * @desc    Update an achievement by ID
+ * @access  Admin
  */
 router.put('/:id', verifyToken, requireAdmin, updateAchievement);
 
 /**
  * @route   DELETE /api/achievements/:id
- * @desc    Delete an achievement
- * @access  Admin only
+ * @desc    Delete an achievement by ID
+ * @access  Admin
  */
 router.delete('/:id', verifyToken, requireAdmin, deleteAchievement);
 

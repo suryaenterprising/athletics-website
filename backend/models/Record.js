@@ -1,47 +1,60 @@
-// models/Record.js
 import mongoose from 'mongoose';
 
-const RecordEntrySchema = new mongoose.Schema({
-  event: { 
-    type: String, 
-    required: true, 
-    trim: true 
+// Schema for each entry in track/field
+const RecordEntrySchema = new mongoose.Schema(
+  {
+    event: { 
+      type: String, 
+      required: true, 
+      trim: true 
+    },
+    record: { 
+      type: String, 
+      required: true, 
+      trim: true
+      // Optional strict format check:
+      // match: /^[0-9.]+(s|m)$/i
+    },
+    athlete: { 
+      type: String, 
+      required: true, 
+      trim: true 
+    },
+    year: { 
+      type: Number, 
+      required: true,
+      min: 1900,
+      validate: {
+        validator: function (v) {
+          return v <= new Date().getFullYear();
+        },
+        message: props => `${props.value} is not a valid year`
+      }
+    }
   },
-  record: { 
-    type: String, 
-    required: true, 
-    trim: true 
-    // Optionally: match: /^[0-9.]+(s|m)$/i for time/distance format
-  },
-  athlete: { 
-    type: String, 
-    required: true, 
-    trim: true 
-  },
-  year: { 
-    type: Number, 
-    required: true,
-    min: 1900, 
-    max: new Date().getFullYear()
-  }
-}, { _id: false });
+  { _id: false }
+);
 
-const RecordSchema = new mongoose.Schema({
-  category: { 
-    type: String, 
-    required: true, 
-    trim: true, 
-    lowercase: true,
-    index: true // faster queries on category
+// Main Records schema — one document per category
+const RecordSchema = new mongoose.Schema(
+  {
+    category: { 
+      type: String, 
+      required: true, 
+      trim: true, 
+      lowercase: true,
+      index: true // speeds up queries like GET /api/records?category=best
+    },
+    track: { 
+      type: [RecordEntrySchema], 
+      default: [] 
+    },
+    field: { 
+      type: [RecordEntrySchema], 
+      default: [] 
+    }
   },
-  track: { 
-    type: [RecordEntrySchema], 
-    default: [] 
-  },
-  field: { 
-    type: [RecordEntrySchema], 
-    default: [] 
-  }
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 export default mongoose.model('Record', RecordSchema);

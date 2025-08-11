@@ -1,5 +1,7 @@
-// backend/routes/competitionRoutes.js
+// backend/routes/competition.js
 import express from 'express';
+
+// Controllers
 import {
   getCompetitions,
   getCompetition,
@@ -7,6 +9,8 @@ import {
   updateCompetition,
   deleteCompetition
 } from '../controllers/competitionController.js';
+
+// Middleware
 import { verifyToken, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -28,21 +32,21 @@ router.get('/:id', getCompetition);
 /**
  * @route   POST /api/competitions
  * @desc    Create a new competition
- * @access  Admin
+ * @access  Admin only
  */
 router.post('/', verifyToken, requireAdmin, createCompetition);
 
 /**
  * @route   PUT /api/competitions/:id
  * @desc    Update a competition by ID
- * @access  Admin
+ * @access  Admin only
  */
 router.put('/:id', verifyToken, requireAdmin, updateCompetition);
 
 /**
  * @route   DELETE /api/competitions/:id
  * @desc    Delete a competition by ID
- * @access  Admin
+ * @access  Admin only
  */
 router.delete('/:id', verifyToken, requireAdmin, deleteCompetition);
 

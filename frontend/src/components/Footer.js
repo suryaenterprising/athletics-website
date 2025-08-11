@@ -49,11 +49,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center">
                 <i className="fas fa-phone-alt mr-2" />
-                <span>+91 731 660 3000</span>
+                <span>+91 6281179541</span>
               </li>
               <li className="flex items-center">
                 <i className="fas fa-envelope mr-2" />
-                <span>athletics@iiti.ac.in</span>
+                <span>athletic.iiti@gmail.com</span>
               </li>
             </ul>
           </div>

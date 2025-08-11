@@ -40,6 +40,7 @@ export default function LoginModals({ modal, closeModal, onAdminLoginSuccess }) 
       }
 
       if (res.ok) {
+        // Save token & role to localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
 
@@ -48,9 +49,9 @@ export default function LoginModals({ modal, closeModal, onAdminLoginSuccess }) 
         closeModal();
 
         if (isAdmin && onAdminLoginSuccess) {
-          onAdminLoginSuccess();  // <-- Show admin panel without reload
+          onAdminLoginSuccess(); // Show admin panel without reload
         } else {
-          // For regular users, keep current redirect or adjust as needed
+          // Redirect user to dashboard (adjust as needed)
           window.location.href = "/user/dashboard";
         }
       } else {

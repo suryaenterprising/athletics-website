@@ -1,4 +1,3 @@
-// backend/models/Competition.js
 import mongoose from 'mongoose';
 
 /**
@@ -8,7 +7,7 @@ const EventResultSchema = new mongoose.Schema(
   {
     position: { type: String, trim: true }, // e.g., "1st", "2nd", "Finalist"
     athlete: { type: String, trim: true },
-    result: { type: String, trim: true }, // e.g., "10.5s", "6.2m"
+    result: { type: String, trim: true },    // e.g., "10.5s", "6.2m"
     points: { type: Number, min: 0 }
   },
   { _id: false }
@@ -19,7 +18,7 @@ const EventResultSchema = new mongoose.Schema(
  */
 const EventSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
-  results: [EventResultSchema]
+  results: { type: [EventResultSchema], default: [] }
 });
 
 /**
@@ -27,7 +26,7 @@ const EventSchema = new mongoose.Schema({
  */
 const EventTypeSchema = new mongoose.Schema({
   typeName: { type: String, required: true, trim: true },
-  events: [EventSchema]
+  events: { type: [EventSchema], default: [] }
 });
 
 /**
@@ -35,7 +34,7 @@ const EventTypeSchema = new mongoose.Schema({
  */
 const CompetitionYearSchema = new mongoose.Schema({
   year: { type: Number, required: true },
-  eventTypes: [EventTypeSchema]
+  eventTypes: { type: [EventTypeSchema], default: [] }
 });
 
 /**
@@ -46,7 +45,7 @@ const UpcomingEventDetailsSchema = new mongoose.Schema(
     date: { type: String, trim: true },
     venue: { type: String, trim: true },
     description: { type: String, trim: true },
-    tags: [{ type: String, trim: true }]
+    tags: { type: [String], default: [] }
   },
   { _id: false }
 );
@@ -56,12 +55,18 @@ const UpcomingEventDetailsSchema = new mongoose.Schema(
  */
 const CompetitionSchema = new mongoose.Schema(
   {
-    key: { type: String, unique: true, required: true, lowercase: true, trim: true },
+    key: { 
+      type: String, 
+      unique: true, // ensure index in DB; catch duplicate errors in controller
+      required: true, 
+      lowercase: true, 
+      trim: true 
+    },
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     gradient: { type: String, trim: true }, // Tailwind gradient classes for UI
-    years: [CompetitionYearSchema],
-    upcomingEventDetails: UpcomingEventDetailsSchema
+    years: { type: [CompetitionYearSchema], default: [] },
+    upcomingEventDetails: { type: UpcomingEventDetailsSchema, default: {} }
   },
   { timestamps: true }
 );

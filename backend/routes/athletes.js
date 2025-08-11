@@ -1,9 +1,17 @@
-// routes/athletes.js
+// backend/routes/athletes.js
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import Athlete from '../models/Athlete.js';
+
+import {
+  getAthletes,
+  createAthlete,
+  updateAthlete,
+  deleteAthlete
+} from '../controllers/athleteController.js';
+
+import { verifyToken, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -25,7 +33,7 @@ const storage = multer.diskStorage({
 });
 
 /**
- * File filter to allow only images
+ * File filter for images
  */
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|webp/;
@@ -41,63 +49,48 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter });
 
 /**
- * Add athlete
+ * GET all athletes (public)
  */
-router.post('/add', upload.single('photo'), async (req, res) => {
-  try {
-    const { name, sport, achievements } = req.body;
-    if (!name || !sport) {
-      return res.status(400).json({ success: false, message: 'Name and sport are required' });
-    }
-
-    const newAthlete = new Athlete({
-      name,
-      sport,
-      achievements,
-      photo: req.file ? `/uploads/athletes/${req.file.filename}` : null
-    });
-
-    await newAthlete.save();
-    res.status(201).json({ success: true, athlete: newAthlete });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+router.get('/', getAthletes);
 
 /**
- * Edit athlete
+ * POST create athlete (admin only)
+ * Accepts 'photo' file field
  */
-router.put('/edit/:id', upload.single('photo'), async (req, res) => {
-  try {
-    const { name, sport, achievements } = req.body;
-    const updateData = { name, sport, achievements };
-
+router.post(
+  '/',
+  verifyToken,
+  requireAdmin,
+  upload.single('photo'),
+  (req, res, next) => {
     if (req.file) {
-      updateData.photo = `/uploads/athletes/${req.file.filename}`;
+      req.body.image = `/uploads/athletes/${req.file.filename}`; // match model's field name
     }
-
-    const athlete = await Athlete.findByIdAndUpdate(req.params.id, updateData, { new: true });
-
-    if (!athlete) {
-      return res.status(404).json({ success: false, message: 'Athlete not found' });
-    }
-
-    res.json({ success: true, athlete });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+    next();
+  },
+  createAthlete
+);
 
 /**
- * Get all athletes
+ * PUT update athlete (admin only)
  */
-router.get('/', async (req, res) => {
-  try {
-    const athletes = await Athlete.find();
-    res.json({ success: true, athletes });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+router.put(
+  '/:id',
+  verifyToken,
+  requireAdmin,
+  upload.single('photo'),
+  (req, res, next) => {
+    if (req.file) {
+      req.body.image = `/uploads/athletes/${req.file.filename}`;
+    }
+    next();
+  },
+  updateAthlete
+);
+
+/**
+ * DELETE athlete (admin only)
+ */
+router.delete('/:id', verifyToken, requireAdmin, deleteAthlete);
 
 export default router;

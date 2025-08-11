@@ -1,14 +1,17 @@
-// routes/auth.js
+// backend/routes/auth.js
 import express from 'express';
+
+// Controllers
 import { signup, login, adminLogin } from '../controllers/authController.js';
-// Optional async wrapper for cleaner error handling
+
+// Utility wrapper to avoid repetitive try/catch blocks
 import asyncHandler from '../utils/asyncHandler.js';
 
 const router = express.Router();
 
 /**
  * @route   POST /api/auth/signup
- * @desc    Register a new user
+ * @desc    Register a new user or admin
  * @access  Public
  */
 router.post('/signup', asyncHandler(signup));
@@ -23,7 +26,7 @@ router.post('/login', asyncHandler(login));
 /**
  * @route   POST /api/auth/admin/login
  * @desc    Login for admin users
- * @access  Public (but restricted by credentials)
+ * @access  Public (credentials verify admin role)
  */
 router.post('/admin/login', asyncHandler(adminLogin));
 

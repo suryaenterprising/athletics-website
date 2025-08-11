@@ -13,43 +13,32 @@ import AdminPanel from "./components/AdminPanel";
 
 export default function App() {
   const [modal, setModal] = useState(null); // "user", "admin", or null
-  const [adminVisible, setAdminVisible] = useState(false);
   const [token, setToken] = useState(null);
   const [role, setRole] = useState(null);
 
+  // Load auth from localStorage on mount
   useEffect(() => {
-    // Load token and role from localStorage on app start
     const storedToken = localStorage.getItem("token");
     const storedRole = localStorage.getItem("role");
     if (storedToken && storedRole) {
       setToken(storedToken);
       setRole(storedRole);
-      if (storedRole === "admin") {
-        setAdminVisible(true);
-      }
     }
   }, []);
 
-  const handleSignIn = (type) => {
-    setModal(type);
-  };
-
+  const handleSignIn = (type) => setModal(type);
   const closeModal = () => setModal(null);
 
-  // Called after admin login success inside LoginModals
-  const handleAdminLoginSuccess = () => {
-    const storedToken = localStorage.getItem("token");
-    const storedRole = localStorage.getItem("role");
-    setToken(storedToken);
-    setRole(storedRole);
-    if (storedRole === "admin") {
-      setAdminVisible(true);
-    }
+  // Called when login (admin or user) succeeds
+  const handleLoginSuccess = (tokenValue, roleValue) => {
+    setToken(tokenValue);
+    setRole(roleValue);
+    localStorage.setItem("token", tokenValue);
+    localStorage.setItem("role", roleValue);
     setModal(null);
   };
 
   const handleLogout = () => {
-    setAdminVisible(false);
     setToken(null);
     setRole(null);
     localStorage.removeItem("token");
@@ -65,26 +54,31 @@ export default function App() {
     <div>
       <Navbar onSignIn={handleSignIn} onLogout={handleLogout} role={role} />
 
-      <Hero />
-      <Competitions />
-      <Achievements />
-      <Records />
-      <Athletes />
+      <Hero adminView={role === "admin"} token={token} />
+      <Competitions adminView={role === "admin"} token={token} />
+      <Achievements adminView={role === "admin"} token={token} />
+      <Records adminView={role === "admin"} token={token} />
+      <Athletes adminView={role === "admin"} token={token} />
       <Footer />
 
       <LoginModals
         modal={modal}
         closeModal={closeModal}
-        onAdminLoginSuccess={handleAdminLoginSuccess}
+        onAdminLoginSuccess={() =>
+          handleLoginSuccess(localStorage.getItem("token"), localStorage.getItem("role"))
+        }
+        // You could also have a similar prop for user login success
       />
 
-      <AdminPanel
-        visible={adminVisible}
-        token={token}
-        role={role}
-        onEdit={handleEditSection}
-        onLogout={handleLogout}
-      />
+      {/* Keep AdminPanel overlay if you still want it */}
+      {role === "admin" && (
+        <AdminPanel
+          token={token}
+          role={role}
+          onEdit={handleEditSection}
+          onLogout={handleLogout}
+        />
+      )}
     </div>
   );
 }

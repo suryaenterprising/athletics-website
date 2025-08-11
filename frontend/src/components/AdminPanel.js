@@ -18,11 +18,7 @@ export default function AdminPanel({ visible, token, role }) {
     }
   }, [section]);
 
-  // Early returns moved below hooks
   if (!visible || role !== "admin") return null;
-
- 
-
 
   const fetchSection = async (sec) => {
     try {
@@ -62,7 +58,7 @@ export default function AdminPanel({ visible, token, role }) {
     }
   };
 
-  // --- Nested Edit Helpers ---
+  // Nested edit helpers for competitions section
   const addYear = () => {
     setEditItem({
       ...editItem,
@@ -115,8 +111,6 @@ export default function AdminPanel({ visible, token, role }) {
     setEditItem({ ...editItem, years });
   };
 
- 
-
   return (
     <>
       {/* Floating Admin Button */}
@@ -124,6 +118,7 @@ export default function AdminPanel({ visible, token, role }) {
         <button
           onClick={() => setOpen((v) => !v)}
           className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg"
+          aria-label="Toggle Admin Panel"
         >
           <i className="fas fa-cog"></i>
         </button>
@@ -134,7 +129,7 @@ export default function AdminPanel({ visible, token, role }) {
           {/* Header */}
           <div className="flex justify-between items-center p-4 bg-blue-600 text-white">
             <h2 className="text-lg font-bold">Admin Panel</h2>
-            <button onClick={() => setOpen(false)}>
+            <button onClick={() => setOpen(false)} aria-label="Close Admin Panel">
               <i className="fas fa-times"></i>
             </button>
           </div>
