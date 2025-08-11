@@ -36,8 +36,8 @@ app.options(/^.*$/, cors());
 async function loadRoutesSafely(app) {
   const routesToLoad = [
     { path: '/api/auth', file: './routes/auth.js' },
-    { path: '/api/competitions', file: './routes/competitionRoutes.js' }, // corrected filename to plural form matching previous convention
-    { path: '/api/achievements', file: './routes/achievements.js' },     // corrected filename to plural form
+    { path: '/api/competitions', file: './routes/competition.js' }, // corrected filename to plural form matching previous convention
+    { path: '/api/achievements', file: './routes/achievement.js' },     // corrected filename to plural form
     { path: '/api/athletes', file: './routes/athletes.js' },
     { path: '/api/records', file: './routes/records.js' }
   ];
