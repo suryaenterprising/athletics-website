@@ -5,17 +5,19 @@ const API_URL =
   process.env.REACT_APP_API_URL || "http://localhost:5000"; // Change for production
 
 export default function AdminPanel({ visible, token, role }) {
-  // Hooks must be called in same order every render
+  // Declare all hooks upfront
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState(null);
   const [data, setData] = useState([]);
   const [editItem, setEditItem] = useState(null);
 
-  if (!visible) return null; // <-- now safe, hooks already declared
-
+  // Early returns after hooks
+  if (!visible) return null;
   if (role !== "admin") return null;
 
   const authHeader = { Authorization: `Bearer ${token}` };
+
+  // ... rest of your code ...
 
   useEffect(() => {
     if (section) {
