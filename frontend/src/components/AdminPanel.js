@@ -5,25 +5,27 @@ const API_URL =
   process.env.REACT_APP_API_URL || "http://localhost:5000"; // Change for production
 
 export default function AdminPanel({ visible, token, role }) {
-  // Declare all hooks upfront
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState(null);
   const [data, setData] = useState([]);
   const [editItem, setEditItem] = useState(null);
 
-  // Early returns after hooks
-  if (!visible) return null;
-  if (role !== "admin") return null;
-
   const authHeader = { Authorization: `Bearer ${token}` };
-
-  // ... rest of your code ...
 
   useEffect(() => {
     if (section) {
       fetchSection(section);
     }
   }, [section]);
+
+  // Early returns moved below hooks
+  if (!visible || role !== "admin") return null;
+
+  // ...rest of your component...
+
+
+  // ... rest of your code ...
+
 
   const fetchSection = async (sec) => {
     try {
