@@ -1,7 +1,6 @@
-// src/components/LoginModal.js
 import React, { useState } from "react";
 
-export default function LoginModal({ modal, closeModal }) {
+export default function LoginModals({ modal, closeModal, onAdminLoginSuccess }) {
   const [emailOrId, setEmailOrId] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -9,9 +8,7 @@ export default function LoginModal({ modal, closeModal }) {
   const isOpen = modal === "admin" || modal === "user";
   const isAdmin = modal === "admin";
 
-  // Use env variable for prod, fallback to localhost in dev
-  const API_BASE =
-    process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   const handleLogin = async () => {
     if (!emailOrId || !password) {
@@ -39,7 +36,6 @@ export default function LoginModal({ modal, closeModal }) {
       try {
         data = await res.json();
       } catch {
-        // Non-JSON response (avoid crash)
         data = { message: "Unexpected server response" };
       }
 
@@ -50,9 +46,13 @@ export default function LoginModal({ modal, closeModal }) {
         alert(`${isAdmin ? "Admin" : "User"} login successful!`);
 
         closeModal();
-        window.location.href = isAdmin
-          ? "/admin/dashboard"
-          : "/user/dashboard";
+
+        if (isAdmin && onAdminLoginSuccess) {
+          onAdminLoginSuccess();  // <-- Show admin panel without reload
+        } else {
+          // For regular users, keep current redirect or adjust as needed
+          window.location.href = "/user/dashboard";
+        }
       } else {
         alert(data.message || "Invalid credentials");
       }

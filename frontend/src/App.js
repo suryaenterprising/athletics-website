@@ -16,14 +16,13 @@ export default function App() {
   const [adminVisible, setAdminVisible] = useState(false);
 
   const handleSignIn = (type) => {
-    // type: "user" | "admin"
     setModal(type);
   };
 
   const closeModal = () => setModal(null);
 
+  // This will be called after admin login success
   const handleAdminLoginSuccess = () => {
-    // Could add authentication logic here
     setAdminVisible(true);
     setModal(null);
   };
@@ -33,9 +32,8 @@ export default function App() {
   };
 
   const handleEditSection = (section) => {
-  alert(`Edit ${section} clicked! Implement editing UI here.`);
-};
-
+    alert(`Edit ${section} clicked! Implement editing UI here.`);
+  };
 
   return (
     <div>
@@ -51,6 +49,7 @@ export default function App() {
       <LoginModals
         modal={modal}
         closeModal={closeModal}
+        onAdminLoginSuccess={handleAdminLoginSuccess}  // <-- pass the callback
       />
 
       {/* Admin Floating Panel */}
