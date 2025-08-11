@@ -1,37 +1,45 @@
 // backend/models/Achievement.js
 import mongoose from 'mongoose';
 
-// Schema for competition achievement records
+/**
+ * Schema for a basic record entry inside an event.
+ */
 const recordSchema = new mongoose.Schema({
-  rank: Number,
-  name: String,
-  result: String,
-  remarks: String
-});
+  rank: { type: Number, required: true },
+  name: { type: String, required: true },
+  result: { type: String, required: true },  // e.g., "10.8s" or "7.2m"
+  remarks: { type: String }
+}, { _id: false });
 
-// Schema for an event's achievements
+/**
+ * Schema for achievements tied to a specific event and gender.
+ */
 const achievementRecordSchema = new mongoose.Schema({
-  event: String,
-  gender: { type: String, enum: ['Boys', 'Girls'] },
-  records: [recordSchema]
+  event: { type: String, required: true },
+  gender: { type: String, enum: ['Boys', 'Girls'], required: true },
+  records: { type: [recordSchema], default: [] }
 });
 
-// Schema for achievement items in a category
+/**
+ * Schema for a simple item in an achievement category card.
+ */
 const achievementItemSchema = new mongoose.Schema({
   description: { type: String, required: true }
 }, { _id: false });
 
-// Schema for achievement categories (UI display purposes)
+/**
+ * Main schema for achievement categories (UI display purposes).
+ */
 const achievementCategorySchema = new mongoose.Schema({
-  icon: String,               // e.g., "fas fa-trophy"
+  icon: { type: String },                         // e.g., "fas fa-trophy"
   title: { type: String, required: true },
-  description: String,        // short description of category
-  items: [achievementItemSchema], // list of achievement strings
-  gradient: String            // e.g., "from-blue-600 to-blue-800"
+  description: { type: String },                  // short description of category
+  items: { type: [achievementItemSchema], default: [] },
+  gradient: { type: String }                      // e.g., "from-blue-600 to-blue-800"
 }, { timestamps: true });
 
-// Named export (if you ever want to use it separately)
+// If you ever want to store competition-specific achievement records separately
 export const AchievementRecord = mongoose.model('AchievementRecord', achievementRecordSchema);
 
-// Default export (so `import Achievement from ...` works)
+// Default export for category-based achievements (UI cards)
 export default mongoose.model('Achievement', achievementCategorySchema);

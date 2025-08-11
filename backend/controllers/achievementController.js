@@ -1,48 +1,73 @@
+// controllers/achievementController.js
 import Achievement from '../models/Achievement.js';
 
-// Get all achievement cards
+/**
+ * @desc    Get all achievements
+ * @route   GET /api/achievements
+ * @access  Public
+ */
 export const getAchievements = async (req, res) => {
   try {
     const achievements = await Achievement.find({});
-    res.json(achievements);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(200).json(achievements);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while fetching achievements', error: error.message });
   }
 };
 
-// Create new achievement card
+/**
+ * @desc    Create a new achievement
+ * @route   POST /api/achievements
+ * @access  Admin
+ */
 export const createAchievement = async (req, res) => {
   try {
     const achievement = new Achievement(req.body);
     await achievement.save();
     res.status(201).json(achievement);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating achievement', error: error.message });
   }
 };
 
-// Update achievement by ID
+/**
+ * @desc    Update an achievement by ID
+ * @route   PUT /api/achievements/:id
+ * @access  Admin
+ */
 export const updateAchievement = async (req, res) => {
   try {
-    const achievement = await Achievement.findByIdAndUpdate(
+    const updatedAchievement = await Achievement.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     );
-    if (!achievement) return res.status(404).json({ message: 'Achievement not found' });
-    res.json(achievement);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+
+    if (!updatedAchievement) {
+      return res.status(404).json({ message: 'Achievement not found' });
+    }
+
+    res.status(200).json(updatedAchievement);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating achievement', error: error.message });
   }
 };
 
-// Delete achievement by ID
+/**
+ * @desc    Delete an achievement by ID
+ * @route   DELETE /api/achievements/:id
+ * @access  Admin
+ */
 export const deleteAchievement = async (req, res) => {
   try {
-    const deleted = await Achievement.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Achievement not found' });
+    const deletedAchievement = await Achievement.findByIdAndDelete(req.params.id);
+
+    if (!deletedAchievement) {
+      return res.status(404).json({ message: 'Achievement not found' });
+    }
+
     res.status(204).send();
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while deleting achievement', error: error.message });
   }
 };

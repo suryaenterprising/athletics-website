@@ -1,3 +1,4 @@
+// routes/achievement.js
 import express from 'express';
 import {
   getAchievements,
@@ -5,17 +6,36 @@ import {
   updateAchievement,
   deleteAchievement
 } from '../controllers/achievementController.js';
-
 import { verifyToken, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Public route to fetch achievements
+/**
+ * @route   GET /api/achievements
+ * @desc    Fetch all achievements
+ * @access  Public
+ */
 router.get('/', getAchievements);
 
-// Admin routes for CRUD operations
+/**
+ * @route   POST /api/achievements
+ * @desc    Create a new achievement
+ * @access  Admin only
+ */
 router.post('/', verifyToken, requireAdmin, createAchievement);
+
+/**
+ * @route   PUT /api/achievements/:id
+ * @desc    Update an existing achievement
+ * @access  Admin only
+ */
 router.put('/:id', verifyToken, requireAdmin, updateAchievement);
+
+/**
+ * @route   DELETE /api/achievements/:id
+ * @desc    Delete an achievement
+ * @access  Admin only
+ */
 router.delete('/:id', verifyToken, requireAdmin, deleteAchievement);
 
 export default router;

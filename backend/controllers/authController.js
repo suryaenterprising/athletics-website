@@ -1,66 +1,112 @@
+// controllers/authController.js
 import User from '../models/User.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 
-// Signup for user or admin
-export const signup = async (req, res) => {
-  try {
-    const { email, adminId, password, role } = req.body;
+/**
+ * Utility to generate a JWT
+ */
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user._id, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '6h' }
+  );
+};
 
-    if (role === 'admin' && !adminId) {
+/**
+ * @desc    Signup for user or admin
+ * @route   POST /api/auth/signup
+ * @access  Public
+ */
+export const signup = async (req, res) => {
+  const { email, adminId, password, role } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ message: 'Password is required' });
+  }
+
+  if (!['user', 'admin'].includes(role)) {
+    return res.status(400).json({ message: 'Invalid role' });
+  }
+
+  if (role === 'admin') {
+    if (!adminId) {
       return res.status(400).json({ message: 'Admin ID is required for admin signup' });
     }
-
-    if (role === 'user' && !email) {
+  } else if (role === 'user') {
+    if (!email) {
       return res.status(400).json({ message: 'Email is required for user signup' });
     }
-
-    const existing = await User.findOne({ $or: [{ email }, { adminId }] });
-    if (existing) return res.status(400).json({ message: 'User already exists' });
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = new User({ email, adminId, passwordHash, role });
-    await user.save();
-
-    res.status(201).json({ message: `${role} created successfully` });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
   }
+
+  // Check if a user with same email or adminId already exists
+  const existing = await User.findOne({
+    $or: [
+      ...(email ? [{ email: email.toLowerCase() }] : []),
+      ...(adminId ? [{ adminId }] : [])
+    ]
+  });
+
+  if (existing) {
+    return res.status(400).json({ message: 'User already exists' });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  const user = new User({
+    email: email ? email.toLowerCase() : undefined,
+    adminId,
+    passwordHash,
+    role
+  });
+
+  await user.save();
+
+  res.status(201).json({
+    message: `${role} created successfully`,
+    token: generateToken(user),
+    role: user.role
+  });
 };
 
-// User login
+/**
+ * @desc    Login for regular user
+ * @route   POST /api/auth/login
+ * @access  Public
+ */
 export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    const user = await User.findOne({ email, role: 'user' });
-    if (!user) return res.status(401).json({ message: 'Invalid email or password' });
-
-    const validPass = await user.isValidPassword(password);
-    if (!validPass) return res.status(401).json({ message: 'Invalid email or password' });
-
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '6h' });
-    res.json({ token, role: user.role });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
   }
+
+  const user = await User.findOne({ email: email.toLowerCase(), role: 'user' });
+  if (!user || !(await user.isValidPassword(password))) {
+    return res.status(401).json({ message: 'Invalid email or password' });
+  }
+
+  res.json({ token: generateToken(user), role: user.role });
 };
 
-// Admin login
+/**
+ * @desc    Login for admin
+ * @route   POST /api/auth/admin/login
+ * @access  Public
+ */
 export const adminLogin = async (req, res) => {
-  try {
-    const { adminId, password } = req.body;
+  const { adminId, password } = req.body;
 
-    const admin = await User.findOne({ adminId, role: 'admin' });
-    if (!admin) return res.status(401).json({ message: 'Invalid admin ID or password' });
-
-    const validPass = await admin.isValidPassword(password);
-    if (!validPass) return res.status(401).json({ message: 'Invalid admin ID or password' });
-
-    const token = jwt.sign({ id: admin._id, role: admin.role }, JWT_SECRET, { expiresIn: '6h' });
-    res.json({ token, role: admin.role });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  if (!adminId || !password) {
+    return res.status(400).json({ message: 'Admin ID and password are required' });
   }
+
+  const admin = await User.findOne({ adminId, role: 'admin' });
+  if (!admin || !(await admin.isValidPassword(password))) {
+    return res.status(401).json({ message: 'Invalid admin ID or password' });
+  }
+
+  res.json({ token: generateToken(admin), role: admin.role });
 };

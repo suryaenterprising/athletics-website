@@ -1,38 +1,60 @@
+// backend/controllers/competitionController.js
 import Competition from '../models/Competition.js';
 
-// Get all competitions
+/**
+ * @desc    Get all competitions
+ * @route   GET /api/competitions
+ * @access  Public
+ */
 export const getCompetitions = async (req, res) => {
   try {
     const competitions = await Competition.find({});
-    res.json(competitions);
+    res.status(200).json(competitions);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error fetching competitions:', err);
+    res.status(500).json({ message: 'Server error while fetching competitions.' });
   }
 };
 
-// Get a single competition by ID
+/**
+ * @desc    Get a single competition by ID
+ * @route   GET /api/competitions/:id
+ * @access  Public
+ */
 export const getCompetition = async (req, res) => {
   try {
     const competition = await Competition.findById(req.params.id);
-    if (!competition) return res.status(404).json({ message: "Competition not found" });
-    res.json(competition);
+    if (!competition) {
+      return res.status(404).json({ message: 'Competition not found.' });
+    }
+    res.status(200).json(competition);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(`Error fetching competition ${req.params.id}:`, err);
+    res.status(500).json({ message: 'Server error while fetching competition.' });
   }
 };
 
-// Create new competition
+/**
+ * @desc    Create a new competition
+ * @route   POST /api/competitions
+ * @access  Admin
+ */
 export const createCompetition = async (req, res) => {
   try {
     const newCompetition = new Competition(req.body);
     await newCompetition.save();
     res.status(201).json(newCompetition);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Error creating competition:', err);
+    res.status(400).json({ message: err.message || 'Invalid competition data.' });
   }
 };
 
-// Update competition partially (including nested objects)
+/**
+ * @desc    Update a competition by ID (partial updates supported)
+ * @route   PUT /api/competitions/:id
+ * @access  Admin
+ */
 export const updateCompetition = async (req, res) => {
   try {
     const updatedCompetition = await Competition.findByIdAndUpdate(
@@ -40,20 +62,30 @@ export const updateCompetition = async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     );
-    if (!updatedCompetition) return res.status(404).json({ message: "Competition not found" });
-    res.json(updatedCompetition);
+    if (!updatedCompetition) {
+      return res.status(404).json({ message: 'Competition not found.' });
+    }
+    res.status(200).json(updatedCompetition);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error(`Error updating competition ${req.params.id}:`, err);
+    res.status(400).json({ message: err.message || 'Invalid update data.' });
   }
 };
 
-// Delete a competition by ID
+/**
+ * @desc    Delete a competition by ID
+ * @route   DELETE /api/competitions/:id
+ * @access  Admin
+ */
 export const deleteCompetition = async (req, res) => {
   try {
-    const deleted = await Competition.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Competition not found" });
+    const deletedCompetition = await Competition.findByIdAndDelete(req.params.id);
+    if (!deletedCompetition) {
+      return res.status(404).json({ message: 'Competition not found.' });
+    }
     res.status(204).send();
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(`Error deleting competition ${req.params.id}:`, err);
+    res.status(500).json({ message: 'Server error while deleting competition.' });
   }
 };

@@ -1,46 +1,69 @@
+// backend/models/Competition.js
 import mongoose from 'mongoose';
 
-// Define the schema for the event results inside an event
-const EventResultSchema = new mongoose.Schema({
-  position: String,
-  athlete: String,
-  result: String,
-  points: Number,
-}, { _id: false });
+/**
+ * Schema for individual athlete results in an event
+ */
+const EventResultSchema = new mongoose.Schema(
+  {
+    position: { type: String, trim: true }, // e.g., "1st", "2nd", "Finalist"
+    athlete: { type: String, trim: true },
+    result: { type: String, trim: true }, // e.g., "10.5s", "6.2m"
+    points: { type: Number, min: 0 }
+  },
+  { _id: false }
+);
 
-// Define the schema for events inside an event type
+/**
+ * Schema for a single event under an event type
+ */
 const EventSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, trim: true },
   results: [EventResultSchema]
 });
 
-// Define the schema for event types inside a year
+/**
+ * Schema for a category of events (e.g., "Track", "Field") within a year
+ */
 const EventTypeSchema = new mongoose.Schema({
-  typeName: { type: String, required: true }, // e.g. "track", "field", or custom
+  typeName: { type: String, required: true, trim: true },
   events: [EventSchema]
 });
 
-// Define the schema for a competition year
+/**
+ * Schema for a competition year containing multiple event types
+ */
 const CompetitionYearSchema = new mongoose.Schema({
   year: { type: Number, required: true },
   eventTypes: [EventTypeSchema]
 });
 
-// Define schema for upcoming event details card
-const UpcomingEventDetailsSchema = new mongoose.Schema({
-  date: String,
-  venue: String,
-  description: String,
-  tags: [String]
-}, { _id: false });
+/**
+ * Schema for upcoming event details
+ */
+const UpcomingEventDetailsSchema = new mongoose.Schema(
+  {
+    date: { type: String, trim: true },
+    venue: { type: String, trim: true },
+    description: { type: String, trim: true },
+    tags: [{ type: String, trim: true }]
+  },
+  { _id: false }
+);
 
-const CompetitionSchema = new mongoose.Schema({
-  key: { type: String, unique: true, required: true },  // unique key like 'tvm', 'interiit'
-  title: { type: String, required: true },
-  description: String,
-  gradient: String, // for UI gradient classes
-  years: [CompetitionYearSchema],
-  upcomingEventDetails: UpcomingEventDetailsSchema
-}, { timestamps: true });
+/**
+ * Main Competition schema
+ */
+const CompetitionSchema = new mongoose.Schema(
+  {
+    key: { type: String, unique: true, required: true, lowercase: true, trim: true },
+    title: { type: String, required: true, trim: true },
+    description: { type: String, trim: true },
+    gradient: { type: String, trim: true }, // Tailwind gradient classes for UI
+    years: [CompetitionYearSchema],
+    upcomingEventDetails: UpcomingEventDetailsSchema
+  },
+  { timestamps: true }
+);
 
 export default mongoose.model('Competition', CompetitionSchema);
