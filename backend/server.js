@@ -39,7 +39,8 @@ app.use(
 );
 
 // ✅ Handle preflight for all routes
-app.options("*", cors());
+app.options("/*", cors());
+
 
 // Routes
 app.use("/api/auth", authRoutes);
