@@ -1,16 +1,15 @@
-// backend/routes/records.js
-const express = require('express');
+import express from 'express';
 
 // Controllers
-const {
+import {
   getRecords,
   createRecord,
   updateRecord,
   deleteRecord
-} = require('../controllers/recordController.js');
+} from '../controllers/recordController.js';
 
 // Middleware
-const { verifyToken, requireAdmin } = require('../middleware/authMiddleware.js');
+import { verifyToken, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -42,4 +41,4 @@ router.put('/:id', verifyToken, requireAdmin, updateRecord);
  */
 router.delete('/:id', verifyToken, requireAdmin, deleteRecord);
 
-module.exports = router;
+export default router;
