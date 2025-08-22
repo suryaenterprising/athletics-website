@@ -3,22 +3,14 @@ import mongoose from 'mongoose';
 // Schema for each entry in track/field
 const RecordEntrySchema = new mongoose.Schema(
   {
-    event: { 
-      type: String, 
-      required: true, 
-      trim: true 
-    },
+    event: { type: String, required: true, trim: true },
     record: { 
       type: String, 
       required: true, 
       trim: true,
-      match: /^[0-9.]+(s|m)$/i // Enforce format (e.g., 10.5s or 7.2m)
+      match: /^(\d{1,2}:\d{2}\.\d{2}s|\d+(\.\d+)?(s|m|kg))$/i // supports mm:ss.xx, s, m, kg
     },
-    athlete: { 
-      type: String, 
-      required: true, 
-      trim: true 
-    },
+    athlete: { type: String, required: true, trim: true },
     year: { 
       type: Number, 
       required: true,
@@ -29,11 +21,8 @@ const RecordEntrySchema = new mongoose.Schema(
       }
     }
   },
-  { _id: false }
+  { timestamps: true } // keep IDs + timestamps for subdocs
 );
-
-// Optional: prevent duplicates
-RecordEntrySchema.index({ event: 1, year: 1, athlete: 1 }, { unique: true });
 
 // Main Records schema — one document per category
 const RecordSchema = new mongoose.Schema(
@@ -41,18 +30,13 @@ const RecordSchema = new mongoose.Schema(
     category: { 
       type: String, 
       required: true, 
-      trim: true, 
+      enum: ['boys', 'girls', 'men', 'women', 'mixed'],
       lowercase: true,
-      index: true // speeds up queries like GET /api/records?category=best
+      trim: true,
+      index: true
     },
-    track: { 
-      type: [RecordEntrySchema], 
-      default: [] 
-    },
-    field: { 
-      type: [RecordEntrySchema], 
-      default: [] 
-    }
+    track: { type: [RecordEntrySchema], default: [] },
+    field: { type: [RecordEntrySchema], default: [] }
   },
   { timestamps: true }
 );
