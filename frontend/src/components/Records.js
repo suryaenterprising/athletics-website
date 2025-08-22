@@ -6,8 +6,7 @@ export default function Records({ adminView }) {
   const [editing, setEditing] = useState({});
   const [editRecord, setEditRecord] = useState({});
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
   // Fetch records from backend
   useEffect(() => {
     async function loadRecords() {

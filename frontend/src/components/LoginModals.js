@@ -8,7 +8,7 @@ export default function LoginModals({ modal, closeModal, onAdminLoginSuccess }) 
   const isOpen = modal === "admin" || modal === "user";
   const isAdmin = modal === "admin";
 
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
   const handleLogin = async () => {
     if (!emailOrId || !password) {
       alert("Please fill in all fields");
