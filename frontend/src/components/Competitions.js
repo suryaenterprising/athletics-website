@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios"; // will still be used later when backend is ready
 
 // For now, mock API base. You can replace with your backend later.
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 export default function Competitions({ adminView, token }) {
   const [competitions, setCompetitions] = useState([]);
   const [loading, setLoading] = useState(true);

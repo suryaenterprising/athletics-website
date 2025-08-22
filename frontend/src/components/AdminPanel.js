@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const API_URL =
-  process.env.REACT_APP_API_URL || "http://localhost:5000/api"; // ✅ fixed
+  import.meta.env.VITE_API_URL || "http://localhost:5000"; // ✅ fixed
 
 export default function AdminPanel({ visible, token, role }) {
   const [open, setOpen] = useState(false);
