@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 
 const allowedOrigins = [
-  "https://athletics-website.vercel.app",
+  "https://athletics-website-nu.vercel.app",
   "http://localhost:3000"
 ];
 
