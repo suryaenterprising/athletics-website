@@ -1,144 +1,76 @@
-// backend/controllers/recordController.js
-import Record from '../models/Record.js';
+import express from "express";
+
+// Controllers
+import {
+  getRecords,
+  getRecordByCategory,
+  createRecord,
+  updateRecord,
+  deleteRecord,
+  addEvent,
+  updateEvent,
+  deleteEvent
+} from "../controllers/recordController.js";
+
+// Middleware
+import { verifyToken, requireAdmin } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 /**
- * @desc    Get all record categories
  * @route   GET /api/records
+ * @desc    Get all records
  * @access  Public
  */
-export const getRecords = async (req, res) => {
-  try {
-    const records = await Record.find();
-    res.json(records);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+router.get("/", getRecords);
 
 /**
- * @desc    Get records by category (e.g., boys, girls)
  * @route   GET /api/records/:category
+ * @desc    Get records by category (e.g. boys, girls)
  * @access  Public
  */
-export const getRecordByCategory = async (req, res) => {
-  try {
-    const record = await Record.findOne({ category: req.params.category });
-    if (!record) return res.status(404).json({ message: 'Category not found' });
-    res.json(record);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+router.get("/:category", getRecordByCategory);
 
 /**
- * @desc    Create a new record category
  * @route   POST /api/records
+ * @desc    Create a new record category (admin only)
  * @access  Private/Admin
  */
-export const createRecord = async (req, res) => {
-  try {
-    const record = new Record(req.body);
-    const saved = await record.save();
-    res.status(201).json(saved);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
+router.post("/", verifyToken, requireAdmin, createRecord);
 
 /**
- * @desc    Update entire record category by ID
  * @route   PUT /api/records/:id
+ * @desc    Update a record category by ID (admin only)
  * @access  Private/Admin
  */
-export const updateRecord = async (req, res) => {
-  try {
-    const updated = await Record.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Record not found' });
-    res.json(updated);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
+router.put("/:id", verifyToken, requireAdmin, updateRecord);
 
 /**
- * @desc    Delete entire record category by ID
  * @route   DELETE /api/records/:id
+ * @desc    Delete a record category by ID (admin only)
  * @access  Private/Admin
  */
-export const deleteRecord = async (req, res) => {
-  try {
-    const deleted = await Record.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Record not found' });
-    res.json({ message: 'Record deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+router.delete("/:id", verifyToken, requireAdmin, deleteRecord);
 
 /**
- * @desc    Add a new event to a category (track or field)
  * @route   POST /api/records/:id/:type
+ * @desc    Add new event to category (admin only)
  * @access  Private/Admin
  */
-export const addEvent = async (req, res) => {
-  try {
-    const { id, type } = req.params;
-    const record = await Record.findById(id);
-    if (!record) return res.status(404).json({ message: 'Record not found' });
-
-    record[type].push(req.body); // req.body = { event, holder, year, performance }
-    await record.save();
-
-    res.status(201).json(record);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
+router.post("/:id/:type", verifyToken, requireAdmin, addEvent);
 
 /**
- * @desc    Update a specific event by index
  * @route   PUT /api/records/:id/:type/:eventIndex
+ * @desc    Update event by index (admin only)
  * @access  Private/Admin
  */
-export const updateEvent = async (req, res) => {
-  try {
-    const { id, type, eventIndex } = req.params;
-    const record = await Record.findById(id);
-    if (!record) return res.status(404).json({ message: 'Record not found' });
-
-    if (!record[type] || !record[type][eventIndex]) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
-
-    record[type][eventIndex] = { ...record[type][eventIndex]._doc, ...req.body };
-    await record.save();
-
-    res.json(record);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
+router.put("/:id/:type/:eventIndex", verifyToken, requireAdmin, updateEvent);
 
 /**
- * @desc    Delete a specific event by index
  * @route   DELETE /api/records/:id/:type/:eventIndex
+ * @desc    Delete event by index (admin only)
  * @access  Private/Admin
  */
-export const deleteEvent = async (req, res) => {
-  try {
-    const { id, type, eventIndex } = req.params;
-    const record = await Record.findById(id);
-    if (!record) return res.status(404).json({ message: 'Record not found' });
+router.delete("/:id/:type/:eventIndex", verifyToken, requireAdmin, deleteEvent);
 
-    if (!record[type] || !record[type][eventIndex]) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
-
-    record[type].splice(eventIndex, 1);
-    await record.save();
-
-    res.json(record);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+export default router;
