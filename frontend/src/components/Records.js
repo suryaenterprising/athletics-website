@@ -7,6 +7,7 @@ export default function Records({ adminView }) {
   const [editRecord, setEditRecord] = useState({});
 
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
   // Fetch records from backend
   useEffect(() => {
     async function loadRecords() {
@@ -14,20 +15,25 @@ export default function Records({ adminView }) {
         const res = await fetch(`${API_URL}/api/records`);
         const data = await res.json();
         if (res.ok) {
-          setRecords(
-            data.reduce((acc, rec) => {
-              acc[rec.category] = rec;
-              return acc;
-            }, {})
-          );
+          const formatted = data.reduce((acc, rec) => {
+            acc[rec.category] = {
+              ...rec,
+              track: Array.isArray(rec.track) ? rec.track : [],
+              field: Array.isArray(rec.field) ? rec.field : [],
+            };
+            return acc;
+          }, {});
+          setRecords(formatted);
           if (data.length > 0) setActiveTab(data[0].category);
+        } else {
+          console.error("Failed to load records:", data.message);
         }
       } catch (err) {
         console.error("Failed to fetch records:", err);
       }
     }
     loadRecords();
-  }, []);
+  }, [API_URL]);
 
   // Helpers
   const getToken = () => localStorage.getItem("token");
@@ -51,7 +57,7 @@ export default function Records({ adminView }) {
           Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify({
-          [type]: [...records[category][type], newEntry],
+          [type]: [...(records[category][type] || []), newEntry],
         }),
       });
 
@@ -59,7 +65,11 @@ export default function Records({ adminView }) {
       if (res.ok) {
         setRecords((prev) => ({
           ...prev,
-          [category]: data,
+          [category]: {
+            ...data,
+            track: data.track || [],
+            field: data.field || [],
+          },
         }));
       } else {
         alert(data.message || "Error adding record");
@@ -71,7 +81,7 @@ export default function Records({ adminView }) {
 
   // Save edited entry
   async function handleSave(category, type, index) {
-    if (!editRecord.event.trim()) {
+    if (!editRecord.event?.trim()) {
       alert("Event name cannot be empty");
       return;
     }
@@ -100,9 +110,14 @@ export default function Records({ adminView }) {
       if (res.ok) {
         setRecords((prev) => ({
           ...prev,
-          [category]: data,
+          [category]: {
+            ...data,
+            track: data.track || [],
+            field: data.field || [],
+          },
         }));
         setEditing((prev) => ({ ...prev, [type]: null }));
+        setEditRecord({});
       } else {
         alert(data.message || "Error saving record");
       }
@@ -131,7 +146,11 @@ export default function Records({ adminView }) {
       if (res.ok) {
         setRecords((prev) => ({
           ...prev,
-          [category]: data,
+          [category]: {
+            ...data,
+            track: data.track || [],
+            field: data.field || [],
+          },
         }));
       } else {
         alert(data.message || "Error deleting record");
@@ -151,7 +170,7 @@ export default function Records({ adminView }) {
 
   if (!activeTab) return <p className="text-center">Loading records...</p>;
 
-  const activeData = records[activeTab];
+  const activeData = records[activeTab] || { track: [], field: [] };
 
   return (
     <section className="py-12 bg-gray-50">
@@ -190,12 +209,12 @@ export default function Records({ adminView }) {
                 </tr>
               </thead>
               <tbody>
-                {activeData[type].map((rec, index) =>
+                {(activeData[type] || []).map((rec, index) =>
                   editing[type] === index ? (
                     <tr key={index}>
                       <td className="border p-2">
                         <input
-                          value={editRecord.event}
+                          value={editRecord.event || ""}
                           onChange={(e) =>
                             setEditRecord((prev) => ({
                               ...prev,
@@ -207,7 +226,7 @@ export default function Records({ adminView }) {
                       </td>
                       <td className="border p-2">
                         <input
-                          value={editRecord.record}
+                          value={editRecord.record || ""}
                           onChange={(e) =>
                             setEditRecord((prev) => ({
                               ...prev,
@@ -219,7 +238,7 @@ export default function Records({ adminView }) {
                       </td>
                       <td className="border p-2">
                         <input
-                          value={editRecord.athlete}
+                          value={editRecord.athlete || ""}
                           onChange={(e) =>
                             setEditRecord((prev) => ({
                               ...prev,
@@ -232,7 +251,7 @@ export default function Records({ adminView }) {
                       <td className="border p-2">
                         <input
                           type="number"
-                          value={editRecord.year}
+                          value={editRecord.year || ""}
                           onChange={(e) =>
                             setEditRecord((prev) => ({
                               ...prev,

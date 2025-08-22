@@ -8,7 +8,7 @@ const RecordEntrySchema = new mongoose.Schema(
       type: String, 
       required: true, 
       trim: true,
-      match: /^(\d{1,2}:\d{2}\.\d{2}s|\d+(\.\d+)?(s|m|kg))$/i // supports mm:ss.xx, s, m, kg
+      match: /^(\d{1,2}:\d{2}(\.\d{1,2})?s|\d+(\.\d+)?(s|m|kg))$/i // more flexible
     },
     athlete: { type: String, required: true, trim: true },
     year: { 
@@ -21,7 +21,7 @@ const RecordEntrySchema = new mongoose.Schema(
       }
     }
   },
-  { timestamps: true } // keep IDs + timestamps for subdocs
+  { timestamps: true }
 );
 
 // Main Records schema — one document per category

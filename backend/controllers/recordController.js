@@ -1,258 +1,159 @@
-import Record from '../models/Record.js';
+// controllers/recordController.js
+import Record from "../models/recordModel.js";
 
 /**
- * @desc    Get all records (optionally filtered by category)
+ * @desc    Get all records
  * @route   GET /api/records
  * @access  Public
  */
 export const getRecords = async (req, res) => {
   try {
-    const filter = {};
-    if (req.query.category) {
-      filter.category = req.query.category.trim().toLowerCase();
-    }
-
-    const records = await Record.find(filter).lean();
-    res.status(200).json({
-      success: true,
-      count: records.length,
-      data: records
-    });
-  } catch (err) {
-    console.error("Error fetching records:", err);
-    res.status(500).json({
-      success: false,
-      message: "Server error retrieving records"
-    });
+    const records = await Record.find();
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 /**
  * @desc    Get records by category
- * @route   GET /api/records/:category
+ * @route   GET /api/records/category/:category
  * @access  Public
  */
 export const getRecordByCategory = async (req, res) => {
   try {
-    const category = req.params.category.trim().toLowerCase();
-    const record = await Record.findOne({ category }).lean();
-
-    if (!record) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found"
-      });
-    }
-
-    res.status(200).json({ success: true, data: record });
-  } catch (err) {
-    console.error("Error fetching record by category:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    const record = await Record.findOne({ category: req.params.category.toLowerCase() });
+    if (!record) return res.status(404).json({ message: "Category not found" });
+    res.json(record);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 /**
- * @desc    Create a new record category
+ * @desc    Create new record category
  * @route   POST /api/records
- * @access  Admin
+ * @access  Private/Admin
  */
 export const createRecord = async (req, res) => {
   try {
-    if (!req.body.category) {
-      return res.status(400).json({
-        success: false,
-        message: "Category is required"
-      });
-    }
+    const { category } = req.body;
+    const existing = await Record.findOne({ category: category.toLowerCase() });
+    if (existing) return res.status(400).json({ message: "Category already exists" });
 
-    req.body.category = req.body.category.trim().toLowerCase();
-
-    const normalizeEntries = (entries) =>
-      entries.map(item => ({
-        ...item,
-        event: item.event?.trim(),
-        athlete: item.athlete?.trim(),
-        record: item.record?.trim(),
-        year: item.year
-      }));
-
-    if (Array.isArray(req.body.track)) req.body.track = normalizeEntries(req.body.track);
-    if (Array.isArray(req.body.field)) req.body.field = normalizeEntries(req.body.field);
-
-    const newRecord = new Record(req.body);
-    const saved = await newRecord.save();
-
-    res.status(201).json({ success: true, data: saved });
-  } catch (err) {
-    console.error("Error creating record:", err);
-    res.status(400).json({
-      success: false,
-      message: err.message || "Invalid record data"
-    });
+    const newRecord = new Record({ category: category.toLowerCase() });
+    await newRecord.save();
+    res.status(201).json(newRecord);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 /**
- * @desc    Update a record category by ID
+ * @desc    Update record category
  * @route   PUT /api/records/:id
- * @access  Admin
+ * @access  Private/Admin
  */
 export const updateRecord = async (req, res) => {
   try {
-    if (req.body.category) {
-      req.body.category = req.body.category.trim().toLowerCase();
-    }
-
-    const normalizeEntries = (entries) =>
-      entries.map(item => ({
-        ...item,
-        event: item.event?.trim(),
-        athlete: item.athlete?.trim(),
-        record: item.record?.trim(),
-        year: item.year
-      }));
-
-    if (Array.isArray(req.body.track)) req.body.track = normalizeEntries(req.body.track);
-    if (Array.isArray(req.body.field)) req.body.field = normalizeEntries(req.body.field);
-
-    const updated = await Record.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({
-        success: false,
-        message: "Record category not found"
-      });
-    }
-
-    res.status(200).json({ success: true, data: updated });
-  } catch (err) {
-    console.error(`Error updating record ${req.params.id}:`, err);
-    res.status(400).json({
-      success: false,
-      message: err.message || "Error updating record"
-    });
+    const updated = await Record.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: "Record not found" });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 /**
- * @desc    Delete a record category by ID
+ * @desc    Delete record category
  * @route   DELETE /api/records/:id
- * @access  Admin
+ * @access  Private/Admin
  */
 export const deleteRecord = async (req, res) => {
   try {
     const deleted = await Record.findByIdAndDelete(req.params.id);
-
-    if (!deleted) {
-      return res.status(404).json({
-        success: false,
-        message: "Record category not found"
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Record deleted successfully",
-      data: deleted
-    });
-  } catch (err) {
-    console.error(`Error deleting record ${req.params.id}:`, err);
-    res.status(500).json({
-      success: false,
-      message: "Server error deleting record"
-    });
+    if (!deleted) return res.status(404).json({ message: "Record not found" });
+    res.json({ message: "Record deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 /**
- * @desc    Add a new event entry to a category (track/field)
+ * @desc    Add new event to track/field
  * @route   POST /api/records/:id/:type
- * @access  Admin
+ * @access  Private/Admin
  */
 export const addEvent = async (req, res) => {
   try {
     const { id, type } = req.params;
-    if (!['track', 'field'].includes(type)) {
-      return res.status(400).json({ success: false, message: "Invalid type" });
-    }
+    const { event, record, athlete, year } = req.body;
 
-    const record = await Record.findById(id);
-    if (!record) {
-      return res.status(404).json({ success: false, message: "Category not found" });
-    }
+    if (!["track", "field"].includes(type))
+      return res.status(400).json({ message: "Invalid type (use 'track' or 'field')" });
 
-    record[type].push(req.body);
-    await record.save();
+    const recordDoc = await Record.findById(id);
+    if (!recordDoc) return res.status(404).json({ message: "Record category not found" });
 
-    res.status(201).json({ success: true, data: record });
-  } catch (err) {
-    console.error("Error adding event:", err);
-    res.status(400).json({ success: false, message: err.message });
+    recordDoc[type].push({ event, record, athlete, year });
+    await recordDoc.save();
+
+    res.status(201).json(recordDoc);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 /**
- * @desc    Update a specific event entry
- * @route   PUT /api/records/:id/:type/:eventIndex
- * @access  Admin
+ * @desc    Update event in track/field
+ * @route   PUT /api/records/:id/:type/:eventId
+ * @access  Private/Admin
  */
 export const updateEvent = async (req, res) => {
   try {
-    const { id, type, eventIndex } = req.params;
-    if (!['track', 'field'].includes(type)) {
-      return res.status(400).json({ success: false, message: "Invalid type" });
-    }
+    const { id, type, eventId } = req.params;
 
-    const record = await Record.findById(id);
-    if (!record) {
-      return res.status(404).json({ success: false, message: "Category not found" });
-    }
+    if (!["track", "field"].includes(type))
+      return res.status(400).json({ message: "Invalid type (use 'track' or 'field')" });
 
-    if (!record[type][eventIndex]) {
-      return res.status(404).json({ success: false, message: "Event not found" });
-    }
+    const recordDoc = await Record.findById(id);
+    if (!recordDoc) return res.status(404).json({ message: "Record category not found" });
 
-    record[type][eventIndex] = { ...record[type][eventIndex]._doc, ...req.body };
-    await record.save();
+    const event = recordDoc[type].id(eventId);
+    if (!event) return res.status(404).json({ message: "Event not found" });
 
-    res.status(200).json({ success: true, data: record });
-  } catch (err) {
-    console.error("Error updating event:", err);
-    res.status(400).json({ success: false, message: err.message });
+    Object.assign(event, req.body); // merge updates
+    await recordDoc.save();
+
+    res.json(recordDoc);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 /**
- * @desc    Delete a specific event entry
- * @route   DELETE /api/records/:id/:type/:eventIndex
- * @access  Admin
+ * @desc    Delete event from track/field
+ * @route   DELETE /api/records/:id/:type/:eventId
+ * @access  Private/Admin
  */
 export const deleteEvent = async (req, res) => {
   try {
-    const { id, type, eventIndex } = req.params;
-    if (!['track', 'field'].includes(type)) {
-      return res.status(400).json({ success: false, message: "Invalid type" });
-    }
+    const { id, type, eventId } = req.params;
 
-    const record = await Record.findById(id);
-    if (!record) {
-      return res.status(404).json({ success: false, message: "Category not found" });
-    }
+    if (!["track", "field"].includes(type))
+      return res.status(400).json({ message: "Invalid type (use 'track' or 'field')" });
 
-    if (!record[type][eventIndex]) {
-      return res.status(404).json({ success: false, message: "Event not found" });
-    }
+    const recordDoc = await Record.findById(id);
+    if (!recordDoc) return res.status(404).json({ message: "Record category not found" });
 
-    record[type].splice(eventIndex, 1);
-    await record.save();
+    const event = recordDoc[type].id(eventId);
+    if (!event) return res.status(404).json({ message: "Event not found" });
 
-    res.status(200).json({ success: true, data: record });
-  } catch (err) {
-    console.error("Error deleting event:", err);
-    res.status(400).json({ success: false, message: err.message });
+    event.deleteOne(); // remove the subdocument
+    await recordDoc.save();
+
+    res.json(recordDoc);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

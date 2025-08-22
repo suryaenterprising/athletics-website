@@ -25,13 +25,6 @@ const router = express.Router();
 router.get("/", getRecords);
 
 /**
- * @route   GET /api/records/:category
- * @desc    Get records by category (e.g. boys, girls)
- * @access  Public
- */
-router.get("/:category", getRecordByCategory);
-
-/**
  * @route   POST /api/records
  * @desc    Create a new record category (admin only)
  * @access  Private/Admin
@@ -53,6 +46,13 @@ router.put("/:id", verifyToken, requireAdmin, updateRecord);
 router.delete("/:id", verifyToken, requireAdmin, deleteRecord);
 
 /**
+ * @route   GET /api/records/category/:category
+ * @desc    Get records by category (e.g. boys, girls)
+ * @access  Public
+ */
+router.get("/category/:category", getRecordByCategory);
+
+/**
  * @route   POST /api/records/:id/:type
  * @desc    Add new event to category (admin only)
  * @access  Private/Admin
@@ -60,17 +60,17 @@ router.delete("/:id", verifyToken, requireAdmin, deleteRecord);
 router.post("/:id/:type", verifyToken, requireAdmin, addEvent);
 
 /**
- * @route   PUT /api/records/:id/:type/:eventIndex
- * @desc    Update event by index (admin only)
+ * @route   PUT /api/records/:id/:type/:eventId
+ * @desc    Update event by eventId (admin only)
  * @access  Private/Admin
  */
-router.put("/:id/:type/:eventIndex", verifyToken, requireAdmin, updateEvent);
+router.put("/:id/:type/:eventId", verifyToken, requireAdmin, updateEvent);
 
 /**
- * @route   DELETE /api/records/:id/:type/:eventIndex
- * @desc    Delete event by index (admin only)
+ * @route   DELETE /api/records/:id/:type/:eventId
+ * @desc    Delete event by eventId (admin only)
  * @access  Private/Admin
  */
-router.delete("/:id/:type/:eventIndex", verifyToken, requireAdmin, deleteEvent);
+router.delete("/:id/:type/:eventId", verifyToken, requireAdmin, deleteEvent);
 
 export default router;
