@@ -1,244 +1,304 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-// Example starting records structure
-const initialRecords = {
-  best: {
-    track: [
-      { event: "100m", record: "10.2s", athlete: "John Doe", year: "2019" },
-    ],
-    field: [
-      { event: "Long Jump", record: "7.2m", athlete: "Jane Doe", year: "2018" },
-    ],
-  },
-  2023: { track: [], field: [] },
-  2024: { track: [], field: [] },
-};
+export default function Records({ adminView }) {
+  const [records, setRecords] = useState({});
+  const [activeTab, setActiveTab] = useState("");
+  const [editing, setEditing] = useState({});
+  const [editRecord, setEditRecord] = useState({});
 
-export default function Records({ adminView = true }) {
-  const [records, setRecords] = useState(initialRecords);
-  const [activeTab, setActiveTab] = useState("best");
+  const API_URL = import.meta.env.REACT_APP_API_URL || "http://localhost:5000";
 
-  const [editing, setEditing] = useState({ track: null, field: null });
-  const [editRecord, setEditRecord] = useState({
-    event: "",
-    record: "",
-    athlete: "",
-    year: "",
-  });
+  // Fetch records from backend
+  useEffect(() => {
+    async function loadRecords() {
+      try {
+        const res = await fetch(`${API_URL}/api/records`);
+        const data = await res.json();
+        if (res.ok) {
+          setRecords(
+            data.reduce((acc, rec) => {
+              acc[rec.category] = rec;
+              return acc;
+            }, {})
+          );
+          if (data.length > 0) setActiveTab(data[0].category);
+        }
+      } catch (err) {
+        console.error("Failed to fetch records:", err);
+      }
+    }
+    loadRecords();
+  }, []);
 
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setEditRecord((prev) => ({ ...prev, [name]: value }));
-  }
+  // Helpers
+  const getToken = () => localStorage.getItem("token");
 
-  function handleEdit(category, index) {
-    setEditing((prev) => ({ ...prev, [category]: index }));
+  // ---- CRUD HANDLERS ----
 
-    const tabRecords = records[activeTab];
-    if (tabRecords && tabRecords[category] && tabRecords[category][index]) {
-      setEditRecord({ ...tabRecords[category][index] });
-    } else {
-      setEditRecord({ event: "", record: "", athlete: "", year: "" });
+  // Create new entry
+  async function handleAdd(category, type) {
+    const newEntry = {
+      event: "New Event",
+      record: "0s",
+      athlete: "Unknown",
+      year: new Date().getFullYear(),
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/api/records/${records[category]._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({
+          [type]: [...records[category][type], newEntry],
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setRecords((prev) => ({
+          ...prev,
+          [category]: data,
+        }));
+      } else {
+        alert(data.message || "Error adding record");
+      }
+    } catch (err) {
+      console.error("Add failed:", err);
     }
   }
 
-  function handleSave(category) {
+  // Save edited entry
+  async function handleSave(category, type, index) {
     if (!editRecord.event.trim()) {
       alert("Event name cannot be empty");
       return;
     }
-    setRecords((prev) => {
-      const tabRecords = prev[activeTab] || { track: [], field: [] };
-      const updatedCategory = [...(tabRecords[category] || [])];
-      updatedCategory[editing[category]] = { ...editRecord };
+    if (editRecord.year > new Date().getFullYear()) {
+      alert("Year cannot be in the future");
+      return;
+    }
 
-      return {
-        ...prev,
-        [activeTab]: {
-          ...tabRecords,
-          [category]: updatedCategory,
+    try {
+      const updatedList = records[category][type].map((r, i) =>
+        i === index ? editRecord : r
+      );
+
+      const res = await fetch(`${API_URL}/api/records/${records[category]._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
-      };
-    });
-    setEditing((prev) => ({ ...prev, [category]: null }));
-  }
-
-  function handleCancel(category) {
-    setEditing((prev) => ({ ...prev, [category]: null }));
-    setEditRecord({ event: "", record: "", athlete: "", year: "" });
-  }
-
-  function handleDelete(category, index) {
-    if (window.confirm("Are you sure you want to delete this record?")) {
-      setRecords((prev) => {
-        const tabRecords = prev[activeTab] || { track: [], field: [] };
-        const updatedCategory = (tabRecords[category] || []).filter(
-          (_, i) => i !== index
-        );
-        return {
-          ...prev,
-          [activeTab]: {
-            ...tabRecords,
-            [category]: updatedCategory,
-          },
-        };
+        body: JSON.stringify({
+          [type]: updatedList,
+        }),
       });
+
+      const data = await res.json();
+      if (res.ok) {
+        setRecords((prev) => ({
+          ...prev,
+          [category]: data,
+        }));
+        setEditing((prev) => ({ ...prev, [type]: null }));
+      } else {
+        alert(data.message || "Error saving record");
+      }
+    } catch (err) {
+      console.error("Save failed:", err);
     }
   }
 
-  function handleAdd(category) {
-    setRecords((prev) => {
-      const tabRecords = prev[activeTab] || { track: [], field: [] };
-      const updatedCategory = [
-        ...(tabRecords[category] || []),
-        { event: "", record: "", athlete: "", year: "" },
-      ];
-      return {
-        ...prev,
-        [activeTab]: {
-          ...tabRecords,
-          [category]: updatedCategory,
+  // Delete entry
+  async function handleDelete(category, type, index) {
+    try {
+      const updatedList = records[category][type].filter((_, i) => i !== index);
+
+      const res = await fetch(`${API_URL}/api/records/${records[category]._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
-      };
-    });
+        body: JSON.stringify({
+          [type]: updatedList,
+        }),
+      });
 
-    setEditing((prev) => ({
-      ...prev,
-      [category]: (records[activeTab]?.[category]?.length || 0),
-    }));
-
-    setEditRecord({ event: "", record: "", athlete: "", year: "" });
+      const data = await res.json();
+      if (res.ok) {
+        setRecords((prev) => ({
+          ...prev,
+          [category]: data,
+        }));
+      } else {
+        alert(data.message || "Error deleting record");
+      }
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   }
 
-  const renderTable = (tabKey, category) => {
-    const tabRecords = records[tabKey] || { track: [], field: [] };
-    const recordsList = tabRecords[category] || [];
-
-    return (
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded-lg overflow-hidden">
-          <thead className="bg-blue-600 text-white">
-            <tr>
-              <th className="py-3 px-4 text-left">Event</th>
-              <th className="py-3 px-4 text-left">Record</th>
-              <th className="py-3 px-4 text-left">Athlete</th>
-              <th className="py-3 px-4 text-left">Year</th>
-              {adminView && <th className="py-3 px-4">Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {recordsList.map((rec, i) => (
-              <tr key={i} className="border-b border-gray-200 hover:bg-blue-50">
-                {editing[category] === i && activeTab === tabKey ? (
-                  <>
-                    {["event", "record", "athlete", "year"].map((field) => (
-                      <td className="py-3 px-4" key={field}>
-                        <input
-                          type="text"
-                          name={field}
-                          value={editRecord[field]}
-                          onChange={handleChange}
-                          className="w-full border border-gray-300 rounded px-2 py-1"
-                        />
-                      </td>
-                    ))}
-                    <td className="py-3 px-4 space-x-2">
-                      <button
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-                        onClick={() => handleSave(category)}
-                      >
-                        Save
-                      </button>
-                      <button
-                        className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded"
-                        onClick={() => handleCancel(category)}
-                      >
-                        Cancel
-                      </button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td className="py-3 px-4">{rec.event}</td>
-                    <td className="py-3 px-4">{rec.record}</td>
-                    <td className="py-3 px-4">{rec.athlete}</td>
-                    <td className="py-3 px-4">{rec.year}</td>
-                    {adminView && (
-                      <td className="py-3 px-4 space-x-2">
-                        <button
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-                          onClick={() => handleEdit(category, i)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-                          onClick={() => handleDelete(category, i)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    )}
-                  </>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {adminView && (
-          <div className="mt-4">
-            <button
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-              onClick={() => handleAdd(category)}
-            >
-              + Add Record
-            </button>
-          </div>
-        )}
-      </div>
-    );
+  // Cancel edit
+  const handleCancel = (type) => {
+    setEditing((prev) => ({ ...prev, [type]: null }));
+    setEditRecord({});
   };
 
+  // ---- RENDER ----
+
+  if (!activeTab) return <p className="text-center">Loading records...</p>;
+
+  const activeData = records[activeTab];
+
   return (
-    <div className="p-6">
-      {/* Tab Navigation */}
-      <div className="flex space-x-4 mb-6">
-        {Object.keys(records).map((tab) => (
-          <button
-            key={tab}
-            className={`px-4 py-2 rounded ${
-              activeTab === tab
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab === "best" ? "Best Ever" : tab}
-          </button>
+    <section className="py-12 bg-gray-50">
+      <div className="max-w-5xl mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-6">Records</h2>
+
+        {/* Tabs */}
+        <div className="flex space-x-4 justify-center mb-6">
+          {Object.keys(records).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-md ${
+                activeTab === tab
+                  ? "bg-blue-600 text-white"
+                  : "bg-white border"
+              }`}
+            >
+              {tab.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        {/* Track & Field tables */}
+        {["track", "field"].map((type) => (
+          <div key={type} className="mb-6">
+            <h3 className="text-xl font-semibold mb-3 capitalize">{type}</h3>
+            <table className="w-full border">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-2">Event</th>
+                  <th className="border p-2">Record</th>
+                  <th className="border p-2">Athlete</th>
+                  <th className="border p-2">Year</th>
+                  {adminView && <th className="border p-2">Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {activeData[type].map((rec, index) =>
+                  editing[type] === index ? (
+                    <tr key={index}>
+                      <td className="border p-2">
+                        <input
+                          value={editRecord.event}
+                          onChange={(e) =>
+                            setEditRecord((prev) => ({
+                              ...prev,
+                              event: e.target.value,
+                            }))
+                          }
+                          className="border p-1"
+                        />
+                      </td>
+                      <td className="border p-2">
+                        <input
+                          value={editRecord.record}
+                          onChange={(e) =>
+                            setEditRecord((prev) => ({
+                              ...prev,
+                              record: e.target.value,
+                            }))
+                          }
+                          className="border p-1"
+                        />
+                      </td>
+                      <td className="border p-2">
+                        <input
+                          value={editRecord.athlete}
+                          onChange={(e) =>
+                            setEditRecord((prev) => ({
+                              ...prev,
+                              athlete: e.target.value,
+                            }))
+                          }
+                          className="border p-1"
+                        />
+                      </td>
+                      <td className="border p-2">
+                        <input
+                          type="number"
+                          value={editRecord.year}
+                          onChange={(e) =>
+                            setEditRecord((prev) => ({
+                              ...prev,
+                              year: Number(e.target.value),
+                            }))
+                          }
+                          className="border p-1"
+                        />
+                      </td>
+                      <td className="border p-2 space-x-2">
+                        <button
+                          className="bg-green-500 text-white px-2 py-1 rounded"
+                          onClick={() => handleSave(activeTab, type, index)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="bg-gray-500 text-white px-2 py-1 rounded"
+                          onClick={() => handleCancel(type)}
+                        >
+                          Cancel
+                        </button>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={index}>
+                      <td className="border p-2">{rec.event}</td>
+                      <td className="border p-2">{rec.record}</td>
+                      <td className="border p-2">{rec.athlete}</td>
+                      <td className="border p-2">{rec.year}</td>
+                      {adminView && (
+                        <td className="border p-2 space-x-2">
+                          <button
+                            className="bg-yellow-500 text-white px-2 py-1 rounded"
+                            onClick={() => {
+                              setEditing((prev) => ({ ...prev, [type]: index }));
+                              setEditRecord(rec);
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="bg-red-500 text-white px-2 py-1 rounded"
+                            onClick={() => handleDelete(activeTab, type, index)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+            {adminView && (
+              <button
+                className="mt-3 bg-blue-600 text-white px-4 py-2 rounded"
+                onClick={() => handleAdd(activeTab, type)}
+              >
+                Add {type} record
+              </button>
+            )}
+          </div>
         ))}
       </div>
-
-      {/* Tab Content */}
-      <div className="glass p-6 rounded-xl">
-        <h3 className="text-2xl font-bold mb-6 text-center">
-          {activeTab === "best"
-            ? "Best Ever Records at IIT Indore"
-            : `Records Set in ${activeTab}`}
-        </h3>
-
-        <div className="mb-8">
-          <h4 className="text-xl font-semibold mb-4 text-blue-800">
-            Track Events
-          </h4>
-          {renderTable(activeTab, "track")}
-        </div>
-        <div>
-          <h4 className="text-xl font-semibold mb-4 text-blue-800">
-            Field Events
-          </h4>
-          {renderTable(activeTab, "field")}
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }

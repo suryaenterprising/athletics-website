@@ -1,0 +1,48 @@
+# -------------------
+# Node.js / Backend
+# -------------------
+backend/node_modules/
+backend/.env
+backend/package-lock.json
+
+# Logs
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+backend/pids
+backend/*.pid
+backend/*.seed
+backend/*.pid.lock
+
+# Build outputs
+backend/dist/
+backend/build/
+
+# -------------------
+# React / Frontend
+# -------------------
+frontend/node_modules/
+frontend/.env
+frontend/.cache
+frontend/package-lock.json
+
+# Production build
+frontend/build/
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Testing
+frontend/coverage/
+frontend/.eslintcache
+frontend/jest.config.js
+
+# -------------------
+# General
+# -------------------
+.DS_Store
+Thumbs.db
+.env
+*.log

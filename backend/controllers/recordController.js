@@ -9,13 +9,21 @@ export const getRecords = async (req, res) => {
   try {
     const filter = {};
     if (req.query.category) {
-      filter.category = req.query.category.trim();
+      filter.category = req.query.category.trim().toLowerCase();
     }
+
     const records = await Record.find(filter).lean();
-    res.status(200).json({ success: true, count: records.length, data: records });
+    res.status(200).json({
+      success: true,
+      count: records.length,
+      data: records
+    });
   } catch (err) {
     console.error("Error fetching records:", err);
-    res.status(500).json({ success: false, message: "Server error retrieving records" });
+    res.status(500).json({
+      success: false,
+      message: "Server error retrieving records"
+    });
   }
 };
 
@@ -27,36 +35,36 @@ export const getRecords = async (req, res) => {
 export const createRecord = async (req, res) => {
   try {
     if (!req.body.category) {
-      return res.status(400).json({ success: false, message: "Category is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Category is required"
+      });
     }
 
-    // Trim strings in body
-    req.body.category = req.body.category.trim();
-    if (req.body.track && Array.isArray(req.body.track)) {
-      req.body.track = req.body.track.map(item => ({
+    req.body.category = req.body.category.trim().toLowerCase();
+
+    const normalizeEntries = (entries) =>
+      entries.map(item => ({
         ...item,
         event: item.event?.trim(),
         athlete: item.athlete?.trim(),
         record: item.record?.trim(),
         year: item.year
       }));
-    }
-    if (req.body.field && Array.isArray(req.body.field)) {
-      req.body.field = req.body.field.map(item => ({
-        ...item,
-        event: item.event?.trim(),
-        athlete: item.athlete?.trim(),
-        record: item.record?.trim(),
-        year: item.year
-      }));
-    }
 
-    const rec = new Record(req.body);
-    const savedRecord = await rec.save();
-    res.status(201).json({ success: true, data: savedRecord });
+    if (Array.isArray(req.body.track)) req.body.track = normalizeEntries(req.body.track);
+    if (Array.isArray(req.body.field)) req.body.field = normalizeEntries(req.body.field);
+
+    const newRecord = new Record(req.body);
+    const saved = await newRecord.save();
+
+    res.status(201).json({ success: true, data: saved });
   } catch (err) {
     console.error("Error creating record:", err);
-    res.status(400).json({ success: false, message: err.message || "Invalid record data" });
+    res.status(400).json({
+      success: false,
+      message: err.message || "Invalid record data"
+    });
   }
 };
 
@@ -67,24 +75,42 @@ export const createRecord = async (req, res) => {
  */
 export const updateRecord = async (req, res) => {
   try {
-    // Optional: run same trimming logic as in create
-    if (req.body.category && typeof req.body.category === 'string') {
-      req.body.category = req.body.category.trim();
+    if (req.body.category) {
+      req.body.category = req.body.category.trim().toLowerCase();
     }
+
+    const normalizeEntries = (entries) =>
+      entries.map(item => ({
+        ...item,
+        event: item.event?.trim(),
+        athlete: item.athlete?.trim(),
+        record: item.record?.trim(),
+        year: item.year
+      }));
+
+    if (Array.isArray(req.body.track)) req.body.track = normalizeEntries(req.body.track);
+    if (Array.isArray(req.body.field)) req.body.field = normalizeEntries(req.body.field);
 
     const updated = await Record.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body },
+      req.body,
       { new: true, runValidators: true }
     );
 
     if (!updated) {
-      return res.status(404).json({ success: false, message: "Record category not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Record category not found"
+      });
     }
+
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
     console.error(`Error updating record ${req.params.id}:`, err);
-    res.status(400).json({ success: false, message: err.message || "Error updating record" });
+    res.status(400).json({
+      success: false,
+      message: err.message || "Error updating record"
+    });
   }
 };
 
@@ -96,12 +122,24 @@ export const updateRecord = async (req, res) => {
 export const deleteRecord = async (req, res) => {
   try {
     const deleted = await Record.findByIdAndDelete(req.params.id);
+
     if (!deleted) {
-      return res.status(404).json({ success: false, message: "Record category not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Record category not found"
+      });
     }
-    res.status(200).json({ success: true, message: "Record deleted successfully" });
+
+    res.status(200).json({
+      success: true,
+      message: "Record deleted successfully",
+      data: deleted
+    });
   } catch (err) {
     console.error(`Error deleting record ${req.params.id}:`, err);
-    res.status(500).json({ success: false, message: "Server error deleting record" });
+    res.status(500).json({
+      success: false,
+      message: "Server error deleting record"
+    });
   }
 };

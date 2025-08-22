@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const API_URL =
-  process.env.REACT_APP_API_URL || "http://localhost:5000"; // Change for production
+  process.env.REACT_APP_API_URL || "http://localhost:5000/api"; // ✅ fixed
 
 export default function AdminPanel({ visible, token, role }) {
   const [open, setOpen] = useState(false);
@@ -23,7 +23,7 @@ export default function AdminPanel({ visible, token, role }) {
   const fetchSection = async (sec) => {
     try {
       const res = await axios.get(`${API_URL}/${sec}`, { headers: authHeader });
-      setData(res.data);
+      setData(res.data?.data || res.data || []);
     } catch (err) {
       console.error(err);
       alert(`Failed to load ${sec}`);
@@ -58,7 +58,7 @@ export default function AdminPanel({ visible, token, role }) {
     }
   };
 
-  // Nested edit helpers for competitions section
+  // --- Competition helpers ---
   const addYear = () => {
     setEditItem({
       ...editItem,
@@ -221,10 +221,7 @@ export default function AdminPanel({ visible, token, role }) {
 
                     {/* Years */}
                     <div>
-                      <button
-                        className="bg-green-500 text-white px-2"
-                        onClick={addYear}
-                      >
+                      <button className="bg-green-500 text-white px-2" onClick={addYear}>
                         Add Year
                       </button>
                       {editItem.years?.map((yr, yIdx) => (
@@ -357,6 +354,12 @@ export default function AdminPanel({ visible, token, role }) {
                   <>
                     <input
                       className="border p-1 w-full mb-1"
+                      placeholder="Icon"
+                      value={editItem.icon || ""}
+                      onChange={(e) => setEditItem({ ...editItem, icon: e.target.value })}
+                    />
+                    <input
+                      className="border p-1 w-full mb-1"
                       placeholder="Title"
                       value={editItem.title || ""}
                       onChange={(e) => setEditItem({ ...editItem, title: e.target.value })}
@@ -367,6 +370,25 @@ export default function AdminPanel({ visible, token, role }) {
                       value={editItem.description || ""}
                       onChange={(e) =>
                         setEditItem({ ...editItem, description: e.target.value })
+                      }
+                    />
+                    <input
+                      className="border p-1 w-full mb-1"
+                      placeholder="Gradient (e.g. from-pink-500 to-red-500)"
+                      value={editItem.gradient || ""}
+                      onChange={(e) =>
+                        setEditItem({ ...editItem, gradient: e.target.value })
+                      }
+                    />
+                    <textarea
+                      className="border p-1 w-full mb-1"
+                      placeholder="Items (comma separated)"
+                      value={editItem.items?.join(", ") || ""}
+                      onChange={(e) =>
+                        setEditItem({
+                          ...editItem,
+                          items: e.target.value.split(",").map((i) => i.trim()),
+                        })
                       }
                     />
                   </>
@@ -396,10 +418,29 @@ export default function AdminPanel({ visible, token, role }) {
                 {section === "records" && (
                   <>
                     <input
-                      placeholder="Category (best or year)"
-                      value={editItem.category || ""}
-                      onChange={(e) => setEditItem({ ...editItem, category: e.target.value })}
                       className="border p-1 w-full mb-1"
+                      placeholder="Event"
+                      value={editItem.event || ""}
+                      onChange={(e) => setEditItem({ ...editItem, event: e.target.value })}
+                    />
+                    <input
+                      className="border p-1 w-full mb-1"
+                      placeholder="Holder"
+                      value={editItem.holder || ""}
+                      onChange={(e) => setEditItem({ ...editItem, holder: e.target.value })}
+                    />
+                    <input
+                      className="border p-1 w-full mb-1"
+                      placeholder="Value"
+                      value={editItem.value || ""}
+                      onChange={(e) => setEditItem({ ...editItem, value: e.target.value })}
+                    />
+                    <input
+                      type="number"
+                      className="border p-1 w-full mb-1"
+                      placeholder="Year"
+                      value={editItem.year || ""}
+                      onChange={(e) => setEditItem({ ...editItem, year: Number(e.target.value) })}
                     />
                   </>
                 )}

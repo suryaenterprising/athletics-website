@@ -11,9 +11,8 @@ const RecordEntrySchema = new mongoose.Schema(
     record: { 
       type: String, 
       required: true, 
-      trim: true
-      // Optional strict format check:
-      // match: /^[0-9.]+(s|m)$/i
+      trim: true,
+      match: /^[0-9.]+(s|m)$/i // Enforce format (e.g., 10.5s or 7.2m)
     },
     athlete: { 
       type: String, 
@@ -25,15 +24,16 @@ const RecordEntrySchema = new mongoose.Schema(
       required: true,
       min: 1900,
       validate: {
-        validator: function (v) {
-          return v <= new Date().getFullYear();
-        },
+        validator: v => v <= new Date().getFullYear(),
         message: props => `${props.value} is not a valid year`
       }
     }
   },
   { _id: false }
 );
+
+// Optional: prevent duplicates
+RecordEntrySchema.index({ event: 1, year: 1, athlete: 1 }, { unique: true });
 
 // Main Records schema — one document per category
 const RecordSchema = new mongoose.Schema(
