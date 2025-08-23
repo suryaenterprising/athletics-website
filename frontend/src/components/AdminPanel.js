@@ -193,32 +193,61 @@ export default function AdminPanel({ visible, token, role }) {
                 </h4>
 
                 {/* Competitions */}
-                {section === "competitions" && (
-                  <>
-                    <input
-                      className="border p-1 w-full mb-1"
-                      placeholder="Key"
-                      value={editItem.key || ""}
-                      onChange={(e) => setEditItem({ ...editItem, key: e.target.value })}
-                    />
-                    <input
-                      className="border p-1 w-full mb-1"
-                      placeholder="Title"
-                      value={editItem.title || ""}
-                      onChange={(e) => setEditItem({ ...editItem, title: e.target.value })}
-                    />
-                    <input
-                      className="border p-1 w-full mb-1"
-                      placeholder="Gradient (e.g. from-blue-500 to-orange-500)"
-                      value={editItem.gradient || ""}
-                      onChange={(e) => setEditItem({ ...editItem, gradient: e.target.value })}
-                    />
-                    <textarea
-                      className="border p-1 w-full mb-1"
-                      placeholder="Description"
-                      value={editItem.description || ""}
-                      onChange={(e) => setEditItem({ ...editItem, description: e.target.value })}
-                    />
+{section === "competitions" && (
+  <>
+    <input
+      className="border p-1 w-full mb-1"
+      placeholder="Key"
+      value={editItem.key || ""}
+      onChange={(e) => setEditItem({ ...editItem, key: e.target.value })}
+    />
+    <input
+      className="border p-1 w-full mb-1"
+      placeholder="Title"
+      value={editItem.title || ""}
+      onChange={(e) => setEditItem({ ...editItem, title: e.target.value })}
+    />
+    <input
+      className="border p-1 w-full mb-1"
+      placeholder="Gradient (e.g. from-blue-500 to-orange-500)"
+      value={editItem.gradient || ""}
+      onChange={(e) => setEditItem({ ...editItem, gradient: e.target.value })}
+    />
+    <textarea
+      className="border p-1 w-full mb-1"
+      placeholder="Description"
+      value={editItem.description || ""}
+      onChange={(e) => setEditItem({ ...editItem, description: e.target.value })}
+    />
+
+    {/* ✅ New status select */}
+    <select
+      className="border p-1 w-full mb-2"
+      value={editItem.status || "upcoming"}
+      onChange={(e) => setEditItem({ ...editItem, status: e.target.value })}
+    >
+      <option value="upcoming">Upcoming</option>
+      <option value="present">Present</option>
+      <option value="past">Past</option>
+    </select>
+
+    {/* ✅ Eligibility editing (only for upcoming events) */}
+    {editItem.status === "upcoming" && (
+      <input
+        className="border p-1 w-full mb-1"
+        placeholder="Eligibility (comma separated)"
+        value={(editItem.upcomingEventDetails?.eligibility || []).join(", ")}
+        onChange={(e) =>
+          setEditItem({
+            ...editItem,
+            upcomingEventDetails: {
+              ...editItem.upcomingEventDetails,
+              eligibility: e.target.value.split(",").map((i) => i.trim()),
+            },
+          })
+        }
+      />
+    )}
 
                     {/* Years */}
                     <div>

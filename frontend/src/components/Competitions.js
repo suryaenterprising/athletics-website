@@ -4,160 +4,274 @@ import axios from "axios";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-export default function Competitions() {
-  const [competitions, setCompetitions] = useState([]);
-  const [loading, setLoading] = useState(true);
+const COMPETITION_KEYS = ["tvm", "interiit", "lakshya", "shaurya", "marathons"];
 
-  // UI State for navigation
+export default function Competitions() {
+  const [loading, setLoading] = useState(true);
+  const [upcoming, setUpcoming] = useState([]);
+  const [present, setPresent] = useState([]);
   const [selectedComp, setSelectedComp] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/competitions`).then(res => {
-      setCompetitions(res.data.data || []);
-      setLoading(false);
-    });
+    // Fetch upcoming and present competitions separately
+    const fetchData = async () => {
+      try {
+        const [upRes, presRes] = await Promise.all([
+          axios.get(`${API_URL}/api/competitions?status=upcoming`),
+          axios.get(`${API_URL}/api/competitions?status=present`)
+        ]);
+        setUpcoming(upRes.data.data);
+        setPresent(presRes.data.data);
+        setLoading(false);
+      } catch {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
-  // Glass card CSS
-  const glassCard = "rounded-3xl bg-white bg-opacity-40 shadow-2xl backdrop-blur-lg border border-white/20 transition-all duration-500 hover:scale-105 hover:-rotate-2";
-  
-  // Dynamic years based on selected competition
-  const years = selectedComp?.years?.map(y => y.year) || [];
+  const glassCard = "rounded-3xl bg-white bg-opacity-30 backdrop-blur-lg border border-white/30 shadow-lg transition-transform transform hover:scale-105 hover:rotate-3";
 
-  // Find upcoming event info
-  const upcoming = competitions.find(c => c.upcomingEventDetails?.date) || {};
+  // Filter competitions objects for main 5 keys
+  const mainComps = [...upcoming, ...present].filter(c => COMPETITION_KEYS.includes(c.key));
+
+  // Find competition object by key from either upcoming or present
+  const findCompetitionByKey = (key) => {
+    return upcoming.find(c => c.key === key) || present.find(c => c.key === key);
+  };
 
   return (
-    <div className="relative">
-      {/* Parallax Section BG */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-500 via-orange-200 to-red-500 opacity-50 parallax-bg"></div>
-      
-      <section id="competitions" className="py-20 px-4 md:px-8 flex flex-col gap-12 min-h-screen animate-fadeIn">
-        {/* --- Glassmorphic Upcoming Card --- */}
-        <div className={`mx-auto mb-8 p-6 md:max-w-lg w-full ${glassCard} flex flex-col items-center`}>
-          <h3 className="text-2xl md:text-3xl font-bold text-blue-800 mb-2">Upcoming Competition</h3>
-          <div className="text-lg text-gray-900 mb-2">
-            {upcoming.upcomingEventDetails?.description || "No event announced yet."}
-          </div>
-          <div className="text-md text-blue-700">
-            {upcoming.upcomingEventDetails?.date ? (
-              <>
-                <span className="font-bold">{upcoming.upcomingEventDetails?.date}</span> | {upcoming.upcomingEventDetails?.venue}
-              </>
-            ) : ""}
-          </div>
-        </div>
+    <section className="py-12 px-4 max-w-7xl mx-auto bg-gradient-to-b from-blue-100 to-white min-h-screen relative">
+      <h1 className="text-4xl font-bold text-center text-blue-900 mb-12">Competitions</h1>
 
-        {/* --- Animated 3D Competition Boxes --- */}
-        {!selectedComp && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 justify-center">
-            {["T vs M", "Inter IIT", "Lakshya", "Shaurya", "Marathons"].map((name, idx) => {
-              const comp = competitions.find(c => c.title === name) || {};
-              return (
-                <div
-                  key={name}
-                  className={`
-                    group cursor-pointer font-bold text-lg text-white
-                    rounded-xl shadow-2xl p-7 flex flex-col items-center 
-                    bg-gradient-to-tr ${comp.gradient || "from-blue-500 to-blue-300"}
-                    animated-card
-                  `}
-                  onClick={() => setSelectedComp(comp)}
-                >
-                  {name}
-                  <span className="mt-2 text-xs font-normal">{comp.description || ""}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+      {/* Sub headings: Upcoming and Present */}
+      <div className="flex justify-center gap-12 mb-12">
+        <button
+          onClick={() => {
+            setSelectedComp(null);
+            setSelectedYear(null);
+            setSelectedType(null);
+            setSelectedEvent(null);
+          }}
+          className="font-semibold text-blue-700 underline hover:text-blue-900"
+        >
+          View All
+        </button>
+        <button
+          onClick={() => setSelectedComp("upcoming")}
+          className="font-semibold text-green-700 hover:text-green-900"
+        >
+          Upcoming Competitions
+        </button>
+        <button
+          onClick={() => setSelectedComp("present")}
+          className="font-semibold text-red-700 hover:text-red-900"
+        >
+          Present Competitions
+        </button>
+      </div>
 
-        {/* --- Year Selection --- */}
-        {selectedComp && !selectedYear && (
-          <div className="flex flex-wrap justify-center gap-5 mt-8">
-            {years.map((yr) => (
-              <button
-                key={yr}
-                className="rounded-xl bg-gradient-to-r from-blue-400 to-red-400 px-7 py-3 font-bold text-xl text-white shadow-xl hover:scale-105 hover:rotate-1 transition-all animated-card"
-                onClick={() => setSelectedYear(yr)}
-              >
-                {yr}
-              </button>
-            ))}
-            <button className="text-sm text-gray-500 ml-6 px-2 py-1" onClick={() => setSelectedComp(null)}>Back</button>
-          </div>
-        )}
-
-        {/* --- Event Types --- */}
-        {selectedYear && !selectedType && (
-          <div className="flex flex-wrap gap-10 justify-center mt-8">
-            {["Track Events", "Field Events"].map(type =>
-              <button
-                key={type}
-                className="bg-gradient-to-tl from-orange-400 to-blue-600 px-9 py-4 rounded-2xl font-semibold text-lg text-white shadow-lg hover:scale-105 hover:-rotate-3 transition animated-card"
-                onClick={() => setSelectedType(type)}
-              >
-                {type}
-              </button>
-            )}
-            <button className="text-sm text-gray-500 ml-6 px-2 py-1" onClick={() => setSelectedYear(null)}>Back</button>
-          </div>
-        )}
-
-        {/* --- Event List --- */}
-        {selectedType && !selectedEvent && (
-          <div className="flex flex-wrap gap-6 justify-center mt-8">
-            {(selectedComp.years?.find(y => y.year === selectedYear)?.eventTypes?.find(t => t.typeName.toLowerCase() === selectedType.toLowerCase().split(' ')[0])?.events || []).map(evt =>
-              <button
-                key={evt.name}
-                className="rounded-xl bg-gradient-to-bl from-blue-200 to-orange-300 px-6 py-3 shadow-md font-semibold text-blue-800 hover:scale-105 hover:rotate-1 transition-all animated-card"
-                onClick={() => setSelectedEvent(evt)}
-              >
-                {evt.name}
-              </button>
-            )}
-            <button className="text-sm text-gray-500 ml-6 px-2 py-1" onClick={() => setSelectedType(null)}>Back</button>
-          </div>
-        )}
-
-        {/* --- Player Table --- */}
-        {selectedEvent && (
-          <div className={`mx-auto w-full md:max-w-2xl ${glassCard} p-6 animated-card`}>
-            <h4 className="text-xl font-bold text-blue-700">{selectedEvent.name} - Players</h4>
-            <div className="overflow-x-auto mt-4">
-              <table className="min-w-full bg-white bg-opacity-80 rounded shadow-md font-mono text-sm">
-                <thead>
-                  <tr className="bg-blue-100">
-                    <th className="py-2 px-3 text-left">Position</th>
-                    <th className="py-2 px-3 text-left">Athlete</th>
-                    <th className="py-2 px-3 text-left">Result</th>
-                    <th className="py-2 px-3 text-left">Points</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedEvent.results?.map((r, idx) => (
-                    <tr key={idx} className="animated-table-row">
-                      <td className="py-2 px-3">{r.position}</td>
-                      <td className="py-2 px-3">{r.athlete}</td>
-                      <td className="py-2 px-3">{r.result}</td>
-                      <td className="py-2 px-3">{r.points}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* Section for Upcoming Competitions */}
+      {selectedComp === "upcoming" && (
+        <div className="mb-10 grid gap-6 md:grid-cols-2">
+          {upcoming.map(comp => (
+            <div key={comp._id} className={`${glassCard} p-6`}>
+              <h3 className="text-xl font-bold text-blue-900 mb-2">{comp.title}</h3>
+              <p>{comp.upcomingEventDetails?.description}</p>
+              <p><b>Date:</b> {comp.upcomingEventDetails?.date}</p>
+              <p><b>Venue:</b> {comp.upcomingEventDetails?.venue}</p>
+              <p>
+                <b>Eligibility:</b> {comp.upcomingEventDetails?.eligibility?.join(", ") || "Open to all"}
+              </p>
             </div>
-            <button className="mt-6 bg-red-600 text-white px-6 py-2 rounded hover:bg-red-800 transition" onClick={() => {
-              setSelectedEvent(null);
-              setSelectedType(null);
-              setSelectedYear(null);
-              setSelectedComp(null);
-            }}>Back to Competitions</button>
+          ))}
+        </div>
+      )}
+
+      {/* Section for Present Competitions */}
+      {selectedComp === "present" && (
+        <div className="mb-10 grid gap-6 md:grid-cols-2">
+          {present.map(comp => (
+            <div
+              key={comp._id}
+              className={`${glassCard} p-4 cursor-pointer`}
+              onClick={() => setSelectedComp(comp)}
+            >
+              <h3 className="text-xl font-semibold text-red-900">{comp.title}</h3>
+              <p>{comp.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* When a present competition is selected, show participant results table */}
+      {selectedComp && typeof selectedComp === "object" && selectedComp.status === "present" && (
+        <>
+          <h2 className="text-2xl font-bold text-blue-900 mb-4">Results - {selectedComp.title}</h2>
+          {/* Iterate over years > event types > events > results & display in tables */}
+          {selectedComp.years.map((year, yIdx) => (
+            <div key={yIdx} className="mb-8">
+              <h3 className="text-xl font-semibold mb-3">Year: {year.year}</h3>
+              {year.eventTypes.map((etype, eIdx) => (
+                <div key={eIdx} className="mb-6">
+                  <h4 className="text-lg font-semibold">{etype.typeName}</h4>
+                  {etype.events.map((event, evIdx) => (
+                    <div key={evIdx} className="mb-4 p-4 border rounded-lg shadow-sm bg-white bg-opacity-80">
+                      <h5 className="font-semibold">{event.name}</h5>
+                      <table className="min-w-full text-left text-sm border-collapse border border-gray-300">
+                        <thead>
+                          <tr className="bg-blue-100">
+                            <th className="border px-3 py-1">Position</th>
+                            <th className="border px-3 py-1">Athlete</th>
+                            <th className="border px-3 py-1">Result</th>
+                            <th className="border px-3 py-1">Points</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {event.results?.map((r, rIdx) => (
+                            <tr key={rIdx} className="border-b">
+                              <td className="border px-3 py-1">{r.position}</td>
+                              <td className="border px-3 py-1">{r.athlete}</td>
+                              <td className="border px-3 py-1">{r.result}</td>
+                              <td className="border px-3 py-1">{r.points}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <hr className="my-6"/>
+            </div>
+          ))}
+          <button
+            onClick={() => setSelectedComp(null)}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Back
+          </button>
+        </>
+      )}
+
+      {/* Five main competitions below (merged upcoming+present) */}
+      {!selectedComp && (
+        <>
+          <h2 className="text-3xl my-8 font-semibold text-center text-blue-900">Main Competitions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 max-w-6xl mx-auto px-4">
+            {mainComps.map(comp => (
+              <div
+                key={comp.key}
+                onClick={() => setSelectedComp(comp)}
+                className={`cursor-pointer p-6 rounded-xl text-white shadow-xl bg-gradient-to-tr ${comp.gradient || 'from-blue-500 to-blue-700'} transition-transform transform hover:scale-105 hover:-rotate-4`}
+              >
+                <h3 className="text-xl font-bold text-center mb-2">{comp.title}</h3>
+                <p className="text-sm text-center">{comp.description}</p>
+              </div>
+            ))}
           </div>
-        )}
-      </section>
-    </div>
+        </>
+      )}
+
+      {/* Drill down: when a 5 main competition selected (selectedComp is object) but not the years etc */}
+      {selectedComp && typeof selectedComp === "object" && selectedComp.status !== "present" && (
+        <DrillDownView competition={selectedComp} onBack={() => setSelectedComp(null)} />
+      )}
+    </section>
+  );
+}
+
+/* DrillDownView Component */
+function DrillDownView({ competition, onBack }) {
+  const [year, setYear] = React.useState(null);
+  const [type, setType] = React.useState(null);
+  const [event, setEvent] = React.useState(null);
+
+  const years = competition.years || [];
+
+  const eventTypes = year !== null
+    ? years.find(y => y.year === year)?.eventTypes || []
+    : [];
+
+  const events = type !== null
+    ? eventTypes.find(t => t.typeName === type)?.events || []
+    : [];
+
+  return (
+    <>
+      <button
+        onClick={() => event ? setEvent(null) : type ? setType(null) : year ? setYear(null) : onBack()}
+        className="mb-4 px-4 py-1 text-blue-900 font-semibold underline"
+      >
+        Back
+      </button>
+      {!year && (
+        <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto text-center">
+          {years.map(y => (
+            <button
+              key={y.year}
+              onClick={() => setYear(y.year)}
+              className="bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-lg py-3 shadow-lg hover:scale-105 transition-transform"
+            >
+              {y.year}
+            </button>
+          ))}
+        </div>
+      )}
+      {year && !type && (
+        <div className="grid grid-cols-2 gap-6 max-w-md mx-auto text-center">
+          {eventTypes.map(t => (
+            <button
+              key={t.typeName}
+              onClick={() => setType(t.typeName)}
+              className="bg-gradient-to-tr from-orange-500 to-red-600 text-white rounded-lg py-3 shadow-lg hover:scale-105 transition-transform"
+            >
+              {t.typeName}
+            </button>
+          ))}
+        </div>
+      )}
+      {type && !event && (
+        <div className="max-w-md mx-auto">
+          {events.map(ev => (
+            <button
+              key={ev.name}
+              onClick={() => setEvent(ev)}
+              className="block w-full bg-blue-200 hover:bg-blue-300 rounded-md py-2 my-2 font-semibold"
+            >
+              {ev.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {event && (
+        <div className="overflow-x-auto max-w-3xl mx-auto p-4 bg-white bg-opacity-30 backdrop-blur-md rounded-xl shadow-md">
+          <h3 className="text-xl mb-4 text-blue-900">{event.name} Results</h3>
+          <table className="min-w-full border-collapse border border-gray-300 text-sm">
+            <thead>
+              <tr className="bg-blue-100">
+                <th className="border px-3 py-1 text-left">Position</th>
+                <th className="border px-3 py-1 text-left">Athlete</th>
+                <th className="border px-3 py-1 text-left">Result</th>
+                <th className="border px-3 py-1 text-left">Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              {event.results?.map((r, idx) => (
+                <tr key={idx} className="border-b">
+                  <td className="border px-3 py-1">{r.position}</td>
+                  <td className="border px-3 py-1">{r.athlete}</td>
+                  <td className="border px-3 py-1">{r.result}</td>
+                  <td className="border px-3 py-1">{r.points}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }
