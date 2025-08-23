@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const API_URL =process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 export default function AdminPanel({ visible, token, role }) {
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState(null);
@@ -42,9 +43,7 @@ export default function AdminPanel({ visible, token, role }) {
   const handleSave = async () => {
     try {
       if (editItem._id) {
-        await axios.put(`${API_URL}/${section}/${editItem._id}`, editItem, {
-          headers: authHeader,
-        });
+        await axios.put(`${API_URL}/${section}/${editItem._id}`, editItem, { headers: authHeader });
       } else {
         await axios.post(`${API_URL}/${section}`, editItem, { headers: authHeader });
       }
@@ -123,7 +122,7 @@ export default function AdminPanel({ visible, token, role }) {
       </div>
 
       {open && (
-        <div className="fixed top-0 right-0 w-full md:w-[80%] h-full bg-white shadow-2xl z-50 overflow-y-auto">
+        <div className="fixed top-0 right-0 w-full md:w-[80%] h-full bg-white bg-opacity-40 backdrop-blur-lg border border-white/30 shadow-2xl z-50 overflow-y-auto transition-transform duration-500">
           {/* Header */}
           <div className="flex justify-between items-center p-4 bg-blue-600 text-white">
             <h2 className="text-lg font-bold">Admin Panel</h2>
@@ -156,7 +155,7 @@ export default function AdminPanel({ visible, token, role }) {
                   <h3 className="text-xl">{section.toUpperCase()}</h3>
                   <button
                     onClick={() => setEditItem({})}
-                    className="bg-green-500 px-3 py-1 rounded text-white"
+                    className="bg-green-500 px-3 py-1 text-white rounded hover:scale-105 hover:shadow-xl transition-transform"
                   >
                     Add
                   </button>
@@ -169,13 +168,13 @@ export default function AdminPanel({ visible, token, role }) {
                     <span>{item.title || item.name || item.category}</span>
                     <div className="flex gap-2">
                       <button
-                        className="bg-yellow-500 text-white px-2 rounded"
+                        className="bg-yellow-500 text-white px-2 rounded hover:scale-105 hover:shadow-xl transition-transform"
                         onClick={() => setEditItem(item)}
                       >
                         Edit
                       </button>
                       <button
-                        className="bg-red-500 text-white px-2 rounded"
+                        className="bg-red-500 text-white px-2 rounded hover:scale-105 hover:shadow-xl transition-transform"
                         onClick={() => handleDelete(item._id)}
                       >
                         Del
@@ -188,7 +187,7 @@ export default function AdminPanel({ visible, token, role }) {
 
             {/* Edit Form */}
             {editItem && (
-              <div className="border p-4">
+              <div className="border p-4 rounded-2xl bg-white bg-opacity-70 shadow-2xl animate-slideUp">
                 <h4 className="font-bold mb-2">
                   {editItem._id ? "Edit" : "Add"} {section}
                 </h4>
@@ -208,18 +207,25 @@ export default function AdminPanel({ visible, token, role }) {
                       value={editItem.title || ""}
                       onChange={(e) => setEditItem({ ...editItem, title: e.target.value })}
                     />
+                    <input
+                      className="border p-1 w-full mb-1"
+                      placeholder="Gradient (e.g. from-blue-500 to-orange-500)"
+                      value={editItem.gradient || ""}
+                      onChange={(e) => setEditItem({ ...editItem, gradient: e.target.value })}
+                    />
                     <textarea
                       className="border p-1 w-full mb-1"
                       placeholder="Description"
                       value={editItem.description || ""}
-                      onChange={(e) =>
-                        setEditItem({ ...editItem, description: e.target.value })
-                      }
+                      onChange={(e) => setEditItem({ ...editItem, description: e.target.value })}
                     />
 
                     {/* Years */}
                     <div>
-                      <button className="bg-green-500 text-white px-2" onClick={addYear}>
+                      <button
+                        className="bg-green-500 text-white px-2 rounded hover:scale-105 hover:shadow-xl transition-transform"
+                        onClick={addYear}
+                      >
                         Add Year
                       </button>
                       {editItem.years?.map((yr, yIdx) => (
@@ -234,13 +240,13 @@ export default function AdminPanel({ visible, token, role }) {
                             }}
                           />
                           <button
-                            className="bg-red-400 ml-2"
+                            className="bg-red-400 ml-2 hover:scale-105 hover:shadow-xl transition-transform"
                             onClick={() => removeYear(yIdx)}
                           >
                             Del Year
                           </button>
                           <button
-                            className="bg-blue-400 ml-2"
+                            className="bg-blue-400 ml-2 hover:scale-105 hover:shadow-xl transition-transform"
                             onClick={() => addEventType(yIdx)}
                           >
                             Add Event Type
@@ -256,12 +262,8 @@ export default function AdminPanel({ visible, token, role }) {
                                   setEditItem({ ...editItem, years });
                                 }}
                               />
-                              <button onClick={() => removeEventType(yIdx, tIdx)}>
-                                Del Type
-                              </button>
-                              <button onClick={() => addEvent(yIdx, tIdx)}>
-                                Add Event
-                              </button>
+                              <button onClick={() => removeEventType(yIdx, tIdx)}>Del Type</button>
+                              <button onClick={() => addEvent(yIdx, tIdx)}>Add Event</button>
 
                               {et.events?.map((ev, eIdx) => (
                                 <div key={eIdx} className="ml-4 border p-1">
@@ -274,12 +276,8 @@ export default function AdminPanel({ visible, token, role }) {
                                       setEditItem({ ...editItem, years });
                                     }}
                                   />
-                                  <button onClick={() => removeEvent(yIdx, tIdx, eIdx)}>
-                                    Del Event
-                                  </button>
-                                  <button onClick={() => addResult(yIdx, tIdx, eIdx)}>
-                                    Add Result
-                                  </button>
+                                  <button onClick={() => removeEvent(yIdx, tIdx, eIdx)}>Del Event</button>
+                                  <button onClick={() => addResult(yIdx, tIdx, eIdx)}>Add Result</button>
 
                                   {ev.results?.map((r, rIdx) => (
                                     <div key={rIdx} className="ml-4 border p-1">
@@ -288,9 +286,7 @@ export default function AdminPanel({ visible, token, role }) {
                                         placeholder="Position"
                                         onChange={(e) => {
                                           const years = [...editItem.years];
-                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[
-                                            rIdx
-                                          ].position = e.target.value;
+                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[rIdx].position = e.target.value;
                                           setEditItem({ ...editItem, years });
                                         }}
                                       />
@@ -299,9 +295,7 @@ export default function AdminPanel({ visible, token, role }) {
                                         placeholder="Athlete"
                                         onChange={(e) => {
                                           const years = [...editItem.years];
-                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[
-                                            rIdx
-                                          ].athlete = e.target.value;
+                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[rIdx].athlete = e.target.value;
                                           setEditItem({ ...editItem, years });
                                         }}
                                       />
@@ -310,9 +304,7 @@ export default function AdminPanel({ visible, token, role }) {
                                         placeholder="Result"
                                         onChange={(e) => {
                                           const years = [...editItem.years];
-                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[
-                                            rIdx
-                                          ].result = e.target.value;
+                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[rIdx].result = e.target.value;
                                           setEditItem({ ...editItem, years });
                                         }}
                                       />
@@ -322,19 +314,11 @@ export default function AdminPanel({ visible, token, role }) {
                                         placeholder="Points"
                                         onChange={(e) => {
                                           const years = [...editItem.years];
-                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[
-                                            rIdx
-                                          ].points = Number(e.target.value);
+                                          years[yIdx].eventTypes[tIdx].events[eIdx].results[rIdx].points = Number(e.target.value);
                                           setEditItem({ ...editItem, years });
                                         }}
                                       />
-                                      <button
-                                        onClick={() =>
-                                          removeResult(yIdx, tIdx, eIdx, rIdx)
-                                        }
-                                      >
-                                        Del Result
-                                      </button>
+                                      <button onClick={() => removeResult(yIdx, tIdx, eIdx, rIdx)}>Del Result</button>
                                     </div>
                                   ))}
                                 </div>
@@ -347,112 +331,16 @@ export default function AdminPanel({ visible, token, role }) {
                   </>
                 )}
 
-                {/* Achievements */}
-                {section === "achievements" && (
-                  <>
-                    <input
-                      className="border p-1 w-full mb-1"
-                      placeholder="Icon"
-                      value={editItem.icon || ""}
-                      onChange={(e) => setEditItem({ ...editItem, icon: e.target.value })}
-                    />
-                    <input
-                      className="border p-1 w-full mb-1"
-                      placeholder="Title"
-                      value={editItem.title || ""}
-                      onChange={(e) => setEditItem({ ...editItem, title: e.target.value })}
-                    />
-                    <textarea
-                      className="border p-1 w-full mb-1"
-                      placeholder="Description"
-                      value={editItem.description || ""}
-                      onChange={(e) =>
-                        setEditItem({ ...editItem, description: e.target.value })
-                      }
-                    />
-                    <input
-                      className="border p-1 w-full mb-1"
-                      placeholder="Gradient (e.g. from-pink-500 to-red-500)"
-                      value={editItem.gradient || ""}
-                      onChange={(e) =>
-                        setEditItem({ ...editItem, gradient: e.target.value })
-                      }
-                    />
-                    <textarea
-                      className="border p-1 w-full mb-1"
-                      placeholder="Items (comma separated)"
-                      value={editItem.items?.join(", ") || ""}
-                      onChange={(e) =>
-                        setEditItem({
-                          ...editItem,
-                          items: e.target.value.split(",").map((i) => i.trim()),
-                        })
-                      }
-                    />
-                  </>
-                )}
-
-                {/* Athletes */}
-                {section === "athletes" && (
-                  <>
-                    <input
-                      placeholder="Name"
-                      value={editItem.name || ""}
-                      onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
-                      className="border p-1 w-full mb-1"
-                    />
-                    <select
-                      value={editItem.category || "student"}
-                      onChange={(e) => setEditItem({ ...editItem, category: e.target.value })}
-                    >
-                      <option value="student">Student</option>
-                      <option value="coach">Coach</option>
-                      <option value="alumni">Alumni</option>
-                    </select>
-                  </>
-                )}
-
-                {/* Records */}
-                {section === "records" && (
-                  <>
-                    <input
-                      className="border p-1 w-full mb-1"
-                      placeholder="Event"
-                      value={editItem.event || ""}
-                      onChange={(e) => setEditItem({ ...editItem, event: e.target.value })}
-                    />
-                    <input
-                      className="border p-1 w-full mb-1"
-                      placeholder="Holder"
-                      value={editItem.holder || ""}
-                      onChange={(e) => setEditItem({ ...editItem, holder: e.target.value })}
-                    />
-                    <input
-                      className="border p-1 w-full mb-1"
-                      placeholder="Value"
-                      value={editItem.value || ""}
-                      onChange={(e) => setEditItem({ ...editItem, value: e.target.value })}
-                    />
-                    <input
-                      type="number"
-                      className="border p-1 w-full mb-1"
-                      placeholder="Year"
-                      value={editItem.year || ""}
-                      onChange={(e) => setEditItem({ ...editItem, year: Number(e.target.value) })}
-                    />
-                  </>
-                )}
-
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={handleSave}
-                    className="bg-green-500 px-3 py-1 text-white"
+                    className="bg-green-500 px-3 py-1 text-white rounded hover:scale-105 hover:shadow-xl transition-transform"
                   >
                     Save
                   </button>
                   <button
                     onClick={() => setEditItem(null)}
-                    className="bg-gray-400 px-3 py-1"
+                    className="bg-gray-400 px-3 py-1 rounded hover:scale-105 hover:shadow-xl transition-transform"
                   >
                     Cancel
                   </button>
