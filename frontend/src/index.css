@@ -31,8 +31,7 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 /* Glassmorphism */
@@ -172,4 +171,50 @@ code {
 .modal.active {
   opacity: 1;
   visibility: visible;
+}
+
+/* ✅ New Additions for Competitions & AdminPanel */
+
+/* 3D Card Hover Animation */
+.animated-card {
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+.animated-card:hover {
+  transform: rotateY(12deg) rotateX(6deg) scale(1.08);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.25);
+}
+
+/* Fade-in for Sections */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease forwards;
+}
+
+/* Slide-up Animation for Admin Modal */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slideUp {
+  animation: slideUp 0.4s ease forwards;
+}
+
+/* Parallax BG for Competitions */
+.parallax-bg {
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Animated Buttons */
+.button-animated {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.button-animated:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.2);
 }
